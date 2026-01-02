@@ -151,7 +151,7 @@ export class SeederService {
   async seedContributions(count: number = 200): Promise<void> {
     console.log(`Seeding ${count} contributions...`);
 
-    const members = await this.memberRepository.find({ relations: ['employmentInfo'] });
+    const members = await this.memberRepository.find({ relations: ['employmentHistory'] });
     if (members.length === 0) {
       throw new Error('No members found. Please seed members first.');
     }

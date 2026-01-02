@@ -41,8 +41,12 @@ exports.AppModule = AppModule = __decorate([
                 envFilePath: '.env',
             }),
             typeorm_1.TypeOrmModule.forRoot({
-                type: 'better-sqlite3',
-                database: process.env.DB_NAME || 'prosperity_party_members_management_system_dev.sqlite',
+                type: 'postgres',
+                host: 'localhost',
+                port: 5432,
+                username: 'postgres',
+                password: 'yaya@1984',
+                database: 'prosperity_party_members_management_system_dev',
                 entities: [
                     user_entity_1.User,
                     member_entity_1.Member,
