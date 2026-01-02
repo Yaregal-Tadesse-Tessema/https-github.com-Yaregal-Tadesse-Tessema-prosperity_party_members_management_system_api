@@ -1,0 +1,49 @@
+import { MembersService, CreateMemberDto, UpdateMemberDto, CreateEmploymentDto } from './members.service';
+export declare class MembersController {
+    private readonly membersService;
+    constructor(membersService: MembersService);
+    create(createMemberDto: CreateMemberDto, req: any): Promise<import("../../entities/member.entity").Member>;
+    findAll(req: any, page?: string, limit?: string, search?: string, membershipStatus?: string, status?: string, gender?: string, subCity?: string, familyId?: string): Promise<{
+        members: import("../../entities/member.entity").Member[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
+    getStats(req: any): Promise<{
+        totalMembers: number;
+        memberMembers: number;
+        supportiveMembers: number;
+        candidateMembers: number;
+        totalMaleMembers: number;
+        totalFemaleMembers: number;
+        memberMaleMembers: number;
+        memberFemaleMembers: number;
+        supportiveMaleMembers: number;
+        supportiveFemaleMembers: number;
+        candidateMaleMembers: number;
+        candidateFemaleMembers: number;
+    }>;
+    findOne(id: string, req: any): Promise<import("../../entities/member.entity").Member>;
+    update(id: string, updateMemberDto: UpdateMemberDto, req: any): Promise<import("../../entities/member.entity").Member>;
+    createEmployment(id: string, employmentDto: CreateEmploymentDto, req: any): Promise<import("../../entities/employment-info.entity").EmploymentInfo>;
+    getEmploymentHistory(id: string, req: any): Promise<{
+        id: string;
+        employmentStatus: import("../../entities/employment-info.entity").EmploymentStatus;
+        organizationName?: string;
+        jobTitle?: string;
+        workSector?: string;
+        salaryRange?: import("../../entities/employment-info.entity").SalaryRange;
+        additionalNotes?: string;
+        memberId?: string;
+        member?: import("../../entities/member.entity").Member;
+        createdAt: Date;
+        updatedAt: Date;
+    }[]>;
+    updateEmployment(id: string, employmentId: string, employmentDto: CreateEmploymentDto, req: any): Promise<import("../../entities/employment-info.entity").EmploymentInfo>;
+    updateEmploymentLegacy(id: string, employmentDto: CreateEmploymentDto, req: any): Promise<import("../../entities/employment-info.entity").EmploymentInfo>;
+    deleteEmployment(id: string, employmentId: string, req: any): Promise<{
+        message: string;
+    }>;
+    private checkPermission;
+    private hasRole;
+}

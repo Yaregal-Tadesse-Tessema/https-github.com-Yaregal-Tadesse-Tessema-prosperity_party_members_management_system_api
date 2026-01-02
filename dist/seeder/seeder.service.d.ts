@@ -1,0 +1,30 @@
+import { Repository } from 'typeorm';
+import { Member } from '../entities/member.entity';
+import { Contribution } from '../entities/contribution.entity';
+import { EmploymentInfo } from '../entities/employment-info.entity';
+import { PositionHistory } from '../entities/position-history.entity';
+export declare class SeederService {
+    private memberRepository;
+    private contributionRepository;
+    private employmentRepository;
+    private positionRepository;
+    constructor(memberRepository: Repository<Member>, contributionRepository: Repository<Contribution>, employmentRepository: Repository<EmploymentInfo>, positionRepository: Repository<PositionHistory>);
+    seedMembers(count?: number): Promise<void>;
+    seedContributions(count?: number): Promise<void>;
+    clearAllData(): Promise<void>;
+    private generateEnglishName;
+    private generateEthiopianPhone;
+    private generateNationalId;
+    private generateRandomDate;
+    private generateRandomDateInMonth;
+    private getRandomMembershipStatus;
+    private getRandomEducationLevel;
+    private getRandomFieldOfStudy;
+    private getRandomPartyResponsibility;
+    private getRandomWorkSector;
+    private getRandomPositionTitle;
+    private getRandomPositionLevel;
+    private getRandomResponsibilities;
+    private getRandomAchievements;
+    private getSalaryRange;
+}

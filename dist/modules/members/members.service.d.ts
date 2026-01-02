@@ -1,0 +1,94 @@
+import { Repository } from 'typeorm';
+import { Member, MembershipStatus, Gender, FamilyRelationship, MaritalStatus, Status } from '../../entities/member.entity';
+import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../../entities/employment-info.entity';
+import { AuditLogService } from '../audit/audit-log.service';
+import { FamiliesService } from '../families/families.service';
+export interface CreateMemberDto {
+    partyId: string;
+    nationalId?: string;
+    fullNameAmharic: string;
+    fullNameEnglish: string;
+    gender: Gender;
+    dateOfBirth: Date;
+    primaryPhone: string;
+    secondaryPhone?: string;
+    email?: string;
+    subCity: string;
+    woreda: string;
+    kebele: string;
+    detailedAddress?: string;
+    registrationDate: Date;
+    notes?: string;
+    familyId?: string;
+    familyRelationship?: FamilyRelationship;
+    contributionPercentage?: number;
+    maritalStatus?: MaritalStatus;
+    salaryAmount?: number;
+    membershipStatus?: MembershipStatus;
+    status?: Status;
+}
+export interface UpdateMemberDto {
+    nationalId?: string;
+    fullNameAmharic?: string;
+    fullNameEnglish?: string;
+    gender?: Gender;
+    dateOfBirth?: Date;
+    primaryPhone?: string;
+    secondaryPhone?: string;
+    email?: string;
+    subCity?: string;
+    woreda?: string;
+    kebele?: string;
+    detailedAddress?: string;
+    membershipStatus?: MembershipStatus;
+    notes?: string;
+    familyId?: string;
+    familyRelationship?: FamilyRelationship;
+    contributionPercentage?: number;
+    maritalStatus?: MaritalStatus;
+    salaryAmount?: number;
+    status?: Status;
+}
+export interface CreateEmploymentDto {
+    employmentStatus: EmploymentStatus;
+    organizationName?: string;
+    jobTitle?: string;
+    workSector?: string;
+    monthlySalary?: number;
+    salaryRange?: SalaryRange;
+    additionalNotes?: string;
+}
+export declare class MembersService {
+    private memberRepository;
+    private employmentRepository;
+    private auditLogService;
+    private familiesService;
+    constructor(memberRepository: Repository<Member>, employmentRepository: Repository<EmploymentInfo>, auditLogService: AuditLogService, familiesService: FamiliesService);
+    create(createMemberDto: CreateMemberDto, userId: string, username: string): Promise<Member>;
+    findAll(page?: number, limit?: number, search?: string, membershipStatus?: MembershipStatus, status?: Status, gender?: Gender, subCity?: string, familyId?: string): Promise<{
+        members: Member[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
+    findOne(id: string): Promise<Member>;
+    update(id: string, updateMemberDto: UpdateMemberDto, userId: string, username: string): Promise<Member>;
+    createEmploymentInfo(memberId: string, employmentDto: CreateEmploymentDto, userId: string, username: string): Promise<EmploymentInfo>;
+    updateEmploymentInfo(memberId: string, employmentId: string, employmentDto: CreateEmploymentDto, userId: string, username: string): Promise<EmploymentInfo>;
+    deleteEmploymentInfo(memberId: string, employmentId: string, userId: string, username: string): Promise<void>;
+    getEmploymentHistory(memberId: string): Promise<EmploymentInfo[]>;
+    getMemberStats(): Promise<{
+        totalMembers: number;
+        memberMembers: number;
+        supportiveMembers: number;
+        candidateMembers: number;
+        totalMaleMembers: number;
+        totalFemaleMembers: number;
+        memberMaleMembers: number;
+        memberFemaleMembers: number;
+        supportiveMaleMembers: number;
+        supportiveFemaleMembers: number;
+        candidateMaleMembers: number;
+        candidateFemaleMembers: number;
+    }>;
+}
