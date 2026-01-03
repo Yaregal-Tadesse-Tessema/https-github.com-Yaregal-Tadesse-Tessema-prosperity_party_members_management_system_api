@@ -9,125 +9,132 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Family = exports.FamilyStatus = exports.FamilyType = void 0;
+exports.Hubret = exports.HubretStatus = void 0;
 const typeorm_1 = require("typeorm");
-const member_entity_1 = require("./member.entity");
-const hubret_entity_1 = require("./hubret.entity");
-var FamilyType;
-(function (FamilyType) {
-    FamilyType["NUCLEAR"] = "nuclear";
-    FamilyType["EXTENDED"] = "extended";
-    FamilyType["SINGLE_PARENT"] = "single_parent";
-    FamilyType["BLENDED"] = "blended";
-    FamilyType["OTHER"] = "other";
-})(FamilyType || (exports.FamilyType = FamilyType = {}));
-var FamilyStatus;
-(function (FamilyStatus) {
-    FamilyStatus["ACTIVE"] = "active";
-    FamilyStatus["INACTIVE"] = "inactive";
-    FamilyStatus["DISSOLVED"] = "dissolved";
-})(FamilyStatus || (exports.FamilyStatus = FamilyStatus = {}));
-let Family = class Family {
+const family_entity_1 = require("./family.entity");
+var HubretStatus;
+(function (HubretStatus) {
+    HubretStatus["ACTIVE"] = "active";
+    HubretStatus["INACTIVE"] = "inactive";
+    HubretStatus["DISSOLVED"] = "dissolved";
+})(HubretStatus || (exports.HubretStatus = HubretStatus = {}));
+let Hubret = class Hubret {
     id;
-    familyId;
-    familyNameAmharic;
-    familyNameEnglish;
-    familyType;
-    status;
-    headMemberId;
-    contactMemberId;
     hubretId;
-    hubret;
+    hubretNameAmharic;
+    hubretNameEnglish;
+    status;
+    leaderMemberId;
+    contactPerson;
+    phone;
+    email;
+    region;
+    zone;
+    woreda;
+    kebele;
+    totalFamilies;
     totalMembers;
     activeMembers;
     notes;
-    members;
+    families;
     createdAt;
     updatedAt;
     createdBy;
     updatedBy;
 };
-exports.Family = Family;
+exports.Hubret = Hubret;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
-], Family.prototype, "id", void 0);
+], Hubret.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
-], Family.prototype, "familyId", void 0);
+], Hubret.prototype, "hubretId", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Family.prototype, "familyNameAmharic", void 0);
+], Hubret.prototype, "hubretNameAmharic", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Family.prototype, "familyNameEnglish", void 0);
+], Hubret.prototype, "hubretNameEnglish", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: 'varchar',
-        default: FamilyType.NUCLEAR,
+        default: HubretStatus.ACTIVE,
     }),
     __metadata("design:type", String)
-], Family.prototype, "familyType", void 0);
-__decorate([
-    (0, typeorm_1.Column)({
-        type: 'varchar',
-        default: FamilyStatus.ACTIVE,
-    }),
-    __metadata("design:type", String)
-], Family.prototype, "status", void 0);
+], Hubret.prototype, "status", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Family.prototype, "headMemberId", void 0);
+], Hubret.prototype, "leaderMemberId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Family.prototype, "contactMemberId", void 0);
+], Hubret.prototype, "contactPerson", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Family.prototype, "hubretId", void 0);
+], Hubret.prototype, "phone", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => hubret_entity_1.Hubret, hubret => hubret.families, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'hubretId' }),
-    __metadata("design:type", hubret_entity_1.Hubret)
-], Family.prototype, "hubret", void 0);
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "region", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "zone", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "woreda", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "kebele", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 0 }),
     __metadata("design:type", Number)
-], Family.prototype, "totalMembers", void 0);
+], Hubret.prototype, "totalFamilies", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 0 }),
     __metadata("design:type", Number)
-], Family.prototype, "activeMembers", void 0);
+], Hubret.prototype, "totalMembers", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], Hubret.prototype, "activeMembers", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Family.prototype, "notes", void 0);
+], Hubret.prototype, "notes", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => member_entity_1.Member, member => member.family),
+    (0, typeorm_1.OneToMany)(() => family_entity_1.Family, family => family.hubret),
     __metadata("design:type", Array)
-], Family.prototype, "members", void 0);
+], Hubret.prototype, "families", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], Family.prototype, "createdAt", void 0);
+], Hubret.prototype, "createdAt", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
-], Family.prototype, "updatedAt", void 0);
+], Hubret.prototype, "updatedAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Family.prototype, "createdBy", void 0);
+], Hubret.prototype, "createdBy", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], Family.prototype, "updatedBy", void 0);
-exports.Family = Family = __decorate([
-    (0, typeorm_1.Entity)('families')
-], Family);
-//# sourceMappingURL=family.entity.js.map
+], Hubret.prototype, "updatedBy", void 0);
+exports.Hubret = Hubret = __decorate([
+    (0, typeorm_1.Entity)('hubrets')
+], Hubret);
+//# sourceMappingURL=hubret.entity.js.map

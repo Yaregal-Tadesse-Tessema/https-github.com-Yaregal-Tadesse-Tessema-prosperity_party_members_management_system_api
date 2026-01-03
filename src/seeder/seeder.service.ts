@@ -5,6 +5,7 @@ import { Member, Gender, MembershipStatus, EducationLevel, WorkSector } from '..
 import { Contribution, PaymentStatus, PaymentMethod, ContributionType } from '../entities/contribution.entity';
 import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../entities/employment-info.entity';
 import { PositionHistory, PositionLevel, PositionStatus } from '../entities/position-history.entity';
+import { User, UserRole } from '../entities/user.entity';
 
 @Injectable()
 export class SeederService {
@@ -17,6 +18,8 @@ export class SeederService {
     private employmentRepository: Repository<EmploymentInfo>,
     @InjectRepository(PositionHistory)
     private positionRepository: Repository<PositionHistory>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   async seedMembers(count: number = 50): Promise<void> {
@@ -225,6 +228,34 @@ export class SeederService {
     await this.memberRepository.clear();
 
     console.log('✅ All data cleared successfully');
+  }
+
+  async seedUsers(): Promise<void> {
+    console.log('Seeding users...');
+
+    // Clear existing users first
+    await this.userRepository.clear();
+    console.log('Cleared existing users...');
+
+    // Create a simple admin user with plain text password
+    const adminUser = this.userRepository.create({
+      username: 'admin',
+      password: 'admin123', // Plain text
+      fullName: 'System Administrator',
+      role: UserRole.SYSTEM_ADMIN,
+      phone: '+251911111111',
+      email: 'admin@prosperityparty.et',
+      isActive: true,
+    });
+
+    await this.userRepository.save(adminUser);
+    console.log('✅ Admin user created:');
+    console.log('   Phone: +251911111111');
+    console.log('   Password: admin123');
+    console.log('   Full Name: System Administrator');
+    console.log('   Role: System Admin');
+
+    console.log('✅ Users seeded successfully');
   }
 
   // Helper methods

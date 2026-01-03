@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Family, FamilyType, FamilyStatus } from '../../entities/family.entity';
 import { Member, Gender, MembershipStatus } from '../../entities/member.entity';
+import { Hubret } from '../../entities/hubret.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuditAction, AuditEntity } from '../../entities/audit-log.entity';
 
@@ -11,6 +12,7 @@ export interface CreateFamilyDto {
   familyNameAmharic: string;
   familyNameEnglish: string;
   familyType?: FamilyType;
+  hubretId?: string;
   contactMemberId?: string;
   notes?: string;
 }
@@ -20,6 +22,7 @@ export interface UpdateFamilyDto {
   familyNameEnglish?: string;
   familyType?: FamilyType;
   status?: FamilyStatus;
+  hubretId?: string;
   headMemberId?: string;
   contactMemberId?: string;
   notes?: string;
@@ -32,6 +35,8 @@ export class FamiliesService {
     private familyRepository: Repository<Family>,
     @InjectRepository(Member)
     private memberRepository: Repository<Member>,
+    @InjectRepository(Hubret)
+    private hubretRepository: Repository<Hubret>,
     private auditLogService: AuditLogService,
   ) {}
 
@@ -45,7 +50,18 @@ export class FamiliesService {
       throw new ConflictException('Family ID already exists');
     }
 
-    const family = this.familyRepository.create({
+    // Validate hubret if provided
+    let hubret: Hubret | undefined;
+    if (createFamilyDto.hubretId) {
+      hubret = await this.hubretRepository.findOne({
+        where: { id: createFamilyDto.hubretId },
+      }) || undefined;
+      if (!hubret) {
+        throw new BadRequestException('Invalid hubret ID');
+      }
+    }
+
+    const familyData: any = {
       ...createFamilyDto,
       familyType: createFamilyDto.familyType || FamilyType.NUCLEAR,
       status: FamilyStatus.ACTIVE,
@@ -53,16 +69,22 @@ export class FamiliesService {
       activeMembers: 0,
       createdBy: userId,
       updatedBy: userId,
-    });
+    };
 
-    const savedFamily = await this.familyRepository.save(family);
+    if (hubret) {
+      familyData.hubret = hubret;
+    }
+
+    const family = this.familyRepository.create(familyData);
+
+    const savedFamily: Family = await this.familyRepository.save(family) as any;
 
     // Log the creation
     await this.auditLogService.logAction({
       userId,
       username,
       action: AuditAction.CREATE,
-      entity: AuditEntity.MEMBER, // Using MEMBER as we don't have FAMILY in audit entity yet
+      entity: AuditEntity.FAMILY,
       entityId: savedFamily.id,
       newValues: { familyId: savedFamily.familyId, familyNameEnglish: savedFamily.familyNameEnglish },
       notes: 'Family registration',
@@ -75,7 +97,8 @@ export class FamiliesService {
     page: number = 1,
     limit: number = 10,
     search?: string,
-    status?: FamilyStatus
+    status?: FamilyStatus,
+    hubretId?: string
   ): Promise<{ families: Family[]; total: number; page: number; limit: number }> {
     const queryBuilder = this.familyRepository.createQueryBuilder('family');
 
@@ -88,6 +111,16 @@ export class FamiliesService {
 
     if (status) {
       queryBuilder.andWhere('family.status = :status', { status });
+    }
+
+    if (hubretId !== undefined) {
+      if (hubretId === 'null') {
+        // Find families with no hubret assigned
+        queryBuilder.andWhere('family.hubretId IS NULL');
+      } else {
+        // Find families assigned to specific hubret
+        queryBuilder.andWhere('family.hubretId = :hubretId', { hubretId });
+      }
     }
 
     queryBuilder
@@ -138,7 +171,23 @@ export class FamiliesService {
       familyNameEnglish: family.familyNameEnglish,
       familyType: family.familyType,
       status: family.status,
+      hubretId: family.hubretId,
     };
+
+    // Validate hubret if provided
+    if (updateFamilyDto.hubretId !== undefined) {
+      if (updateFamilyDto.hubretId) {
+        const hubret = await this.hubretRepository.findOne({
+          where: { id: updateFamilyDto.hubretId },
+        });
+        if (!hubret) {
+          throw new BadRequestException('Invalid hubret ID');
+        }
+        family.hubret = hubret;
+      } else {
+        family.hubret = undefined;
+      }
+    }
 
     // Update family
     Object.assign(family, updateFamilyDto);

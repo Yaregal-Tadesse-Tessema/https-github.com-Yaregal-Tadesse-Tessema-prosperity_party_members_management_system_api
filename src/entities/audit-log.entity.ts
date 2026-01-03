@@ -15,6 +15,8 @@ export enum AuditEntity {
   CONTRIBUTION = 'contribution',
   CONTRIBUTION_RULE = 'contribution_rule',
   FILE = 'file',
+  HUBRET = 'hubret',
+  FAMILY = 'family',
 }
 
 @Entity('audit_logs')

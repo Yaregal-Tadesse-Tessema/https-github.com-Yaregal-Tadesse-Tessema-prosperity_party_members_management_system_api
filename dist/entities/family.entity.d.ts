@@ -1,4 +1,5 @@
 import { Member } from './member.entity';
+import { Hubret } from './hubret.entity';
 export declare enum FamilyType {
     NUCLEAR = "nuclear",
     EXTENDED = "extended",
@@ -20,6 +21,8 @@ export declare class Family {
     status: FamilyStatus;
     headMemberId?: string;
     contactMemberId?: string;
+    hubretId?: string;
+    hubret?: Hubret;
     totalMembers: number;
     activeMembers: number;
     notes?: string;

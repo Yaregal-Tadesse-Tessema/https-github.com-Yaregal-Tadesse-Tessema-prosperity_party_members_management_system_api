@@ -21,6 +21,7 @@ const contribution_rule_entity_1 = require("./entities/contribution-rule.entity"
 const file_attachment_entity_1 = require("./entities/file-attachment.entity");
 const audit_log_entity_1 = require("./entities/audit-log.entity");
 const family_entity_1 = require("./entities/family.entity");
+const hubret_entity_1 = require("./entities/hubret.entity");
 const auth_module_1 = require("./modules/auth/auth.module");
 const audit_log_module_1 = require("./modules/audit/audit-log.module");
 const members_module_1 = require("./modules/members/members.module");
@@ -29,6 +30,7 @@ const contributions_module_1 = require("./modules/contributions/contributions.mo
 const reports_module_1 = require("./modules/reports/reports.module");
 const files_module_1 = require("./modules/files/files.module");
 const families_module_1 = require("./modules/families/families.module");
+const hubrets_module_1 = require("./modules/hubrets/hubrets.module");
 const seeder_module_1 = require("./seeder/seeder.module");
 let AppModule = class AppModule {
 };
@@ -57,6 +59,7 @@ exports.AppModule = AppModule = __decorate([
                     file_attachment_entity_1.FileAttachment,
                     audit_log_entity_1.AuditLog,
                     family_entity_1.Family,
+                    hubret_entity_1.Hubret,
                 ],
                 synchronize: process.env.NODE_ENV !== 'production',
                 logging: process.env.NODE_ENV === 'development',
@@ -69,6 +72,7 @@ exports.AppModule = AppModule = __decorate([
             reports_module_1.ReportsModule,
             files_module_1.FilesModule,
             families_module_1.FamiliesModule,
+            hubrets_module_1.HubretsModule,
             seeder_module_1.SeederModule,
         ],
         controllers: [app_controller_1.AppController],

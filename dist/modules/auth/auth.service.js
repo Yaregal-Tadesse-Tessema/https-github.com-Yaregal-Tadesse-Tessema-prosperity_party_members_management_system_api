@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const jwt_1 = require("@nestjs/jwt");
-const bcrypt = require("bcryptjs");
 const user_entity_1 = require("../../entities/user.entity");
 const audit_log_service_1 = require("../audit/audit-log.service");
 const audit_log_entity_1 = require("../../entities/audit-log.entity");
@@ -30,22 +29,21 @@ let AuthService = class AuthService {
         this.jwtService = jwtService;
         this.auditLogService = auditLogService;
     }
-    async validateUser(username, password) {
+    async validateUser(phone, password) {
         const user = await this.userRepository.findOne({
-            where: { username, isActive: true },
+            where: { phone, isActive: true },
         });
         if (!user) {
             return null;
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
+        if (password !== user.password) {
             return null;
         }
         const { password: _, ...result } = user;
         return result;
     }
     async login(loginDto) {
-        const user = await this.validateUser(loginDto.username, loginDto.password);
+        const user = await this.validateUser(loginDto.phone, loginDto.password);
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
@@ -54,13 +52,13 @@ let AuthService = class AuthService {
         });
         await this.auditLogService.logAction({
             userId: user.id,
-            username: user.username,
+            username: user.phone || user.username,
             action: audit_log_entity_1.AuditAction.VIEW,
             entity: audit_log_entity_1.AuditEntity.USER,
             entityId: user.id,
             notes: 'User login',
         });
-        const payload = { username: user.username, sub: user.id, role: user.role };
+        const payload = { username: user.phone || user.username, sub: user.id, role: user.role };
         return {
             user,
             access_token: this.jwtService.sign(payload),
@@ -73,11 +71,9 @@ let AuthService = class AuthService {
         if (existingUser) {
             throw new common_1.ConflictException('Username already exists');
         }
-        const saltRounds = 12;
-        const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
         const user = this.userRepository.create({
             username: registerDto.username,
-            password: hashedPassword,
+            password: registerDto.password,
             fullName: registerDto.fullName,
             role: registerDto.role || user_entity_1.UserRole.DATA_ENTRY_OFFICER,
             phone: registerDto.phone,
@@ -115,10 +111,9 @@ let AuthService = class AuthService {
             where: { role: user_entity_1.UserRole.SYSTEM_ADMIN },
         });
         if (!adminExists) {
-            const hashedPassword = await bcrypt.hash('admin123', 12);
             const admin = this.userRepository.create({
                 username: 'admin',
-                password: hashedPassword,
+                password: 'admin123',
                 fullName: 'System Administrator',
                 role: user_entity_1.UserRole.SYSTEM_ADMIN,
                 phone: '+251911000000',

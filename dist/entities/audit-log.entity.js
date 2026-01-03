@@ -27,6 +27,8 @@ var AuditEntity;
     AuditEntity["CONTRIBUTION"] = "contribution";
     AuditEntity["CONTRIBUTION_RULE"] = "contribution_rule";
     AuditEntity["FILE"] = "file";
+    AuditEntity["HUBRET"] = "hubret";
+    AuditEntity["FAMILY"] = "family";
 })(AuditEntity || (exports.AuditEntity = AuditEntity = {}));
 let AuditLog = class AuditLog {
     id;

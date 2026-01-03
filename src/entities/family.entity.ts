@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { Member } from './member.entity';
+import { Hubret } from './hubret.entity';
 
 export enum FamilyType {
   NUCLEAR = 'nuclear',
@@ -48,6 +49,14 @@ export class Family {
   // Contact Member Information
   @Column({ nullable: true })
   contactMemberId?: string;
+
+  // Hubret Relationship
+  @Column({ nullable: true })
+  hubretId?: string;
+
+  @ManyToOne(() => Hubret, hubret => hubret.families, { nullable: true })
+  @JoinColumn({ name: 'hubretId' })
+  hubret?: Hubret;
 
   @Column({ type: 'int', default: 0 })
   totalMembers: number;

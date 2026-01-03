@@ -44,11 +44,18 @@ async function bootstrap() {
         console.log('✅ Contributions seeded successfully!');
         break;
 
+      case 'users':
+        console.log('👤 Seeding users...');
+        await seederService.seedUsers();
+        console.log('✅ Users seeded successfully!');
+        break;
+
       default:
         console.log('Usage:');
         console.log('  npm run seed:dev seed [members=50] [contributions=200]  # Seed all data');
         console.log('  npm run seed:dev members [count=50]                     # Seed only members');
         console.log('  npm run seed:dev contributions [count=200]              # Seed only contributions');
+        console.log('  npm run seed:dev users                                    # Seed users');
         console.log('  npm run seed:dev clear                                    # Clear all data');
         break;
     }

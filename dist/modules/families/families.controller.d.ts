@@ -5,7 +5,7 @@ export declare class FamiliesController {
     private checkPermission;
     private hasRole;
     create(createFamilyDto: CreateFamilyDto, req: any): Promise<import("../../entities/family.entity").Family>;
-    findAll(req: any, page?: string, limit?: string, search?: string, status?: string): Promise<{
+    findAll(req: any, page?: string, limit?: string, search?: string, status?: string, hubretId?: string): Promise<{
         families: import("../../entities/family.entity").Family[];
         total: number;
         page: number;

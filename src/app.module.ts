@@ -12,6 +12,7 @@ import { ContributionRule } from './entities/contribution-rule.entity';
 import { FileAttachment } from './entities/file-attachment.entity';
 import { AuditLog } from './entities/audit-log.entity';
 import { Family } from './entities/family.entity';
+import { Hubret } from './entities/hubret.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogModule } from './modules/audit/audit-log.module';
 import { MembersModule } from './modules/members/members.module';
@@ -20,6 +21,7 @@ import { ContributionsModule } from './modules/contributions/contributions.modul
 import { ReportsModule } from './modules/reports/reports.module';
 import { FilesModule } from './modules/files/files.module';
 import { FamiliesModule } from './modules/families/families.module';
+import { HubretsModule } from './modules/hubrets/hubrets.module';
 import { SeederModule } from './seeder/seeder.module';
 
 @Module({
@@ -45,6 +47,7 @@ import { SeederModule } from './seeder/seeder.module';
         FileAttachment,
         AuditLog,
         Family,
+        Hubret,
       ],
       synchronize: process.env.NODE_ENV !== 'production',
       logging: process.env.NODE_ENV === 'development',
@@ -57,6 +60,7 @@ import { SeederModule } from './seeder/seeder.module';
     ReportsModule,
     FilesModule,
     FamiliesModule,
+    HubretsModule,
     SeederModule,
   ],
   controllers: [AppController],

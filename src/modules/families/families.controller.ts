@@ -46,11 +46,12 @@ export class FamiliesController {
     @Query('limit') limit: string = '10',
     @Query('search') search?: string,
     @Query('status') status?: string,
+    @Query('hubretId') hubretId?: string,
   ) {
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
 
-    return this.familiesService.findAll(pageNum, limitNum, search, status as any);
+    return this.familiesService.findAll(pageNum, limitNum, search, status as any, hubretId);
   }
 
   @Get('stats')

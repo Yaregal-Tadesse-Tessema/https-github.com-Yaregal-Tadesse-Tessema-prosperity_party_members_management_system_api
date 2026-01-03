@@ -36,10 +36,10 @@ let FamiliesController = class FamiliesController {
         this.checkPermission(req.user, ALLOWED_ROLES_CREATE_UPDATE);
         return this.familiesService.create(createFamilyDto, req.user.id, req.user.username);
     }
-    async findAll(req, page = '1', limit = '10', search, status) {
+    async findAll(req, page = '1', limit = '10', search, status, hubretId) {
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
-        return this.familiesService.findAll(pageNum, limitNum, search, status);
+        return this.familiesService.findAll(pageNum, limitNum, search, status, hubretId);
     }
     async getStats() {
         return this.familiesService.getStats();
@@ -75,8 +75,9 @@ __decorate([
     __param(2, (0, common_1.Query)('limit')),
     __param(3, (0, common_1.Query)('search')),
     __param(4, (0, common_1.Query)('status')),
+    __param(5, (0, common_1.Query)('hubretId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], FamiliesController.prototype, "findAll", null);
 __decorate([

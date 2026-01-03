@@ -20,16 +20,19 @@ const member_entity_1 = require("../entities/member.entity");
 const contribution_entity_1 = require("../entities/contribution.entity");
 const employment_info_entity_1 = require("../entities/employment-info.entity");
 const position_history_entity_1 = require("../entities/position-history.entity");
+const user_entity_1 = require("../entities/user.entity");
 let SeederService = class SeederService {
     memberRepository;
     contributionRepository;
     employmentRepository;
     positionRepository;
-    constructor(memberRepository, contributionRepository, employmentRepository, positionRepository) {
+    userRepository;
+    constructor(memberRepository, contributionRepository, employmentRepository, positionRepository, userRepository) {
         this.memberRepository = memberRepository;
         this.contributionRepository = contributionRepository;
         this.employmentRepository = employmentRepository;
         this.positionRepository = positionRepository;
+        this.userRepository = userRepository;
     }
     async seedMembers(count = 50) {
         console.log(`Seeding ${count} members...`);
@@ -200,6 +203,27 @@ let SeederService = class SeederService {
         await this.memberRepository.clear();
         console.log('✅ All data cleared successfully');
     }
+    async seedUsers() {
+        console.log('Seeding users...');
+        await this.userRepository.clear();
+        console.log('Cleared existing users...');
+        const adminUser = this.userRepository.create({
+            username: 'admin',
+            password: 'admin123',
+            fullName: 'System Administrator',
+            role: user_entity_1.UserRole.SYSTEM_ADMIN,
+            phone: '+251911111111',
+            email: 'admin@prosperityparty.et',
+            isActive: true,
+        });
+        await this.userRepository.save(adminUser);
+        console.log('✅ Admin user created:');
+        console.log('   Phone: +251911111111');
+        console.log('   Password: admin123');
+        console.log('   Full Name: System Administrator');
+        console.log('   Role: System Admin');
+        console.log('✅ Users seeded successfully');
+    }
     generateEnglishName(amharicFirst, amharicLast) {
         const englishNames = {
             'አብረሃም': 'Abraham', 'ሰላም': 'Salam', 'ያሬድ': 'Yared', 'መለስ': 'Meles', 'ታደሰ': 'Tadesse',
@@ -313,7 +337,9 @@ exports.SeederService = SeederService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(contribution_entity_1.Contribution)),
     __param(2, (0, typeorm_1.InjectRepository)(employment_info_entity_1.EmploymentInfo)),
     __param(3, (0, typeorm_1.InjectRepository)(position_history_entity_1.PositionHistory)),
+    __param(4, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

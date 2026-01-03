@@ -2,13 +2,12 @@ import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/co
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '../../entities/user.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuditAction, AuditEntity } from '../../entities/audit-log.entity';
 
 export interface LoginDto {
-  username: string;
+  phone: string;
   password: string;
 }
 
@@ -35,17 +34,17 @@ export class AuthService {
     private auditLogService: AuditLogService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(phone: string, password: string): Promise<any> {
     const user = await this.userRepository.findOne({
-      where: { username, isActive: true },
+      where: { phone, isActive: true },
     });
 
     if (!user) {
       return null;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    // Plain text password comparison
+    if (password !== user.password) {
       return null;
     }
 
@@ -54,7 +53,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
-    const user = await this.validateUser(loginDto.username, loginDto.password);
+    const user = await this.validateUser(loginDto.phone, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -67,14 +66,14 @@ export class AuthService {
     // Log the login action
     await this.auditLogService.logAction({
       userId: user.id,
-      username: user.username,
+      username: user.phone || user.username,
       action: AuditAction.VIEW,
       entity: AuditEntity.USER,
       entityId: user.id,
       notes: 'User login',
     });
 
-    const payload = { username: user.username, sub: user.id, role: user.role };
+    const payload = { username: user.phone || user.username, sub: user.id, role: user.role };
     return {
       user,
       access_token: this.jwtService.sign(payload),
@@ -91,14 +90,10 @@ export class AuthService {
       throw new ConflictException('Username already exists');
     }
 
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
-
-    // Create user
+    // Create user with plain text password
     const user = this.userRepository.create({
       username: registerDto.username,
-      password: hashedPassword,
+      password: registerDto.password, // Plain text
       fullName: registerDto.fullName,
       role: registerDto.role || UserRole.DATA_ENTRY_OFFICER,
       phone: registerDto.phone,
@@ -146,10 +141,9 @@ export class AuthService {
     });
 
     if (!adminExists) {
-      const hashedPassword = await bcrypt.hash('admin123', 12);
       const admin = this.userRepository.create({
         username: 'admin',
-        password: hashedPassword,
+        password: 'admin123', // Plain text
         fullName: 'System Administrator',
         role: UserRole.SYSTEM_ADMIN,
         phone: '+251911000000',

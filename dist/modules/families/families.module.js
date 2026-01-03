@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const family_entity_1 = require("../../entities/family.entity");
 const member_entity_1 = require("../../entities/member.entity");
+const hubret_entity_1 = require("../../entities/hubret.entity");
 const families_service_1 = require("./families.service");
 const families_controller_1 = require("./families.controller");
 const audit_log_module_1 = require("../audit/audit-log.module");
@@ -20,7 +21,7 @@ exports.FamiliesModule = FamiliesModule;
 exports.FamiliesModule = FamiliesModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([family_entity_1.Family, member_entity_1.Member]),
+            typeorm_1.TypeOrmModule.forFeature([family_entity_1.Family, member_entity_1.Member, hubret_entity_1.Hubret]),
             audit_log_module_1.AuditLogModule,
         ],
         controllers: [families_controller_1.FamiliesController],

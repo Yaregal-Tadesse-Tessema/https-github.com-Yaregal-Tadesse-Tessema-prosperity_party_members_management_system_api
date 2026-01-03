@@ -1,12 +1,14 @@
 import { Repository } from 'typeorm';
 import { Family, FamilyType, FamilyStatus } from '../../entities/family.entity';
 import { Member } from '../../entities/member.entity';
+import { Hubret } from '../../entities/hubret.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 export interface CreateFamilyDto {
     familyId: string;
     familyNameAmharic: string;
     familyNameEnglish: string;
     familyType?: FamilyType;
+    hubretId?: string;
     contactMemberId?: string;
     notes?: string;
 }
@@ -15,6 +17,7 @@ export interface UpdateFamilyDto {
     familyNameEnglish?: string;
     familyType?: FamilyType;
     status?: FamilyStatus;
+    hubretId?: string;
     headMemberId?: string;
     contactMemberId?: string;
     notes?: string;
@@ -22,10 +25,11 @@ export interface UpdateFamilyDto {
 export declare class FamiliesService {
     private familyRepository;
     private memberRepository;
+    private hubretRepository;
     private auditLogService;
-    constructor(familyRepository: Repository<Family>, memberRepository: Repository<Member>, auditLogService: AuditLogService);
+    constructor(familyRepository: Repository<Family>, memberRepository: Repository<Member>, hubretRepository: Repository<Hubret>, auditLogService: AuditLogService);
     create(createFamilyDto: CreateFamilyDto, userId: string, username: string): Promise<Family>;
-    findAll(page?: number, limit?: number, search?: string, status?: FamilyStatus): Promise<{
+    findAll(page?: number, limit?: number, search?: string, status?: FamilyStatus, hubretId?: string): Promise<{
         families: Family[];
         total: number;
         page: number;

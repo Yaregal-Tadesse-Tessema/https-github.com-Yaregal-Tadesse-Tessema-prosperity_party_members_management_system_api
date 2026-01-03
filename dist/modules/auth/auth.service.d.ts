@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User, UserRole } from '../../entities/user.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 export interface LoginDto {
-    username: string;
+    phone: string;
     password: string;
 }
 export interface RegisterDto {
@@ -23,7 +23,7 @@ export declare class AuthService {
     private jwtService;
     private auditLogService;
     constructor(userRepository: Repository<User>, jwtService: JwtService, auditLogService: AuditLogService);
-    validateUser(username: string, password: string): Promise<any>;
+    validateUser(phone: string, password: string): Promise<any>;
     login(loginDto: LoginDto): Promise<AuthResponse>;
     register(registerDto: RegisterDto): Promise<AuthResponse>;
     getProfile(userId: string): Promise<Partial<User>>;

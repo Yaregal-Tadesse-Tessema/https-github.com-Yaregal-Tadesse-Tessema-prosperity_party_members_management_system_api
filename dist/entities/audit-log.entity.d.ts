@@ -11,7 +11,9 @@ export declare enum AuditEntity {
     POSITION = "position",
     CONTRIBUTION = "contribution",
     CONTRIBUTION_RULE = "contribution_rule",
-    FILE = "file"
+    FILE = "file",
+    HUBRET = "hubret",
+    FAMILY = "family"
 }
 export declare class AuditLog {
     id: string;
