@@ -19,6 +19,8 @@ export interface CreateMemberDto {
     detailedAddress?: string;
     registrationDate: Date;
     notes?: string;
+    educationalDocumentsFile?: string;
+    experienceDocumentsFile?: string;
     familyId?: string;
     familyRelationship?: FamilyRelationship;
     contributionPercentage?: number;
@@ -42,6 +44,8 @@ export interface UpdateMemberDto {
     detailedAddress?: string;
     membershipStatus?: MembershipStatus;
     notes?: string;
+    educationalDocumentsFile?: string;
+    experienceDocumentsFile?: string;
     familyId?: string;
     familyRelationship?: FamilyRelationship;
     contributionPercentage?: number;
@@ -91,4 +95,37 @@ export declare class MembersService {
         candidateMaleMembers: number;
         candidateFemaleMembers: number;
     }>;
+    uploadEducationalDocuments(memberId: string, file: Express.Multer.File, userId: string, username: string): Promise<{
+        message: string;
+        filename: string;
+        originalFilename: string;
+        fileSize: number;
+    }>;
+    uploadExperienceDocuments(memberId: string, file: Express.Multer.File, userId: string, username: string): Promise<{
+        message: string;
+        filename: string;
+        originalFilename: string;
+        fileSize: number;
+    }>;
+    getEducationalDocuments(memberId: string): Promise<{
+        filePath: string;
+        mimeType: string;
+        originalFilename: string;
+    } | null>;
+    downloadEducationalDocuments(memberId: string): Promise<Buffer | null>;
+    getExperienceDocuments(memberId: string): Promise<{
+        filePath: string;
+        mimeType: string;
+        originalFilename: string;
+    } | null>;
+    downloadExperienceDocuments(memberId: string): Promise<Buffer | null>;
+    deleteEducationalDocuments(memberId: string, userId: string, username: string): Promise<{
+        message: string;
+    }>;
+    deleteExperienceDocuments(memberId: string, userId: string, username: string): Promise<{
+        message: string;
+    }>;
+    getFilteredMembers(filters: any): Promise<Member[]>;
+    generateMembersPDF(members: any[]): Promise<Buffer>;
+    generateMembersExcel(members: any[]): Promise<Buffer>;
 }

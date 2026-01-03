@@ -178,6 +178,13 @@ export class Member {
   @Column({ nullable: true })
   notes?: string;
 
+  // File Attachments
+  @Column({ nullable: true })
+  educationalDocumentsFile?: string; // File path/name for educational documents PDF
+
+  @Column({ nullable: true })
+  experienceDocumentsFile?: string; // File path/name for experience documents
+
   // Family Information
   @Column({ nullable: true })
   familyId?: string;
@@ -193,9 +200,6 @@ export class Member {
   familyRelationship?: FamilyRelationship;
 
   // Contribution and Marital Status
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  contributionPercentage?: number;
-
   @Column({
     type: 'varchar',
     nullable: true
@@ -204,6 +208,9 @@ export class Member {
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   salaryAmount?: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true, default: 1.0 })
+  contributionPercentage?: number;
 
   // Relationships
   @OneToMany(() => EmploymentInfo, employment => employment.member, { cascade: true })

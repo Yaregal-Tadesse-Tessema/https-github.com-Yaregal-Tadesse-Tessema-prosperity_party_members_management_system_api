@@ -17,6 +17,9 @@ var FileType;
     FileType["PROFILE_PHOTO"] = "profile_photo";
     FileType["ID_DOCUMENT"] = "id_document";
     FileType["CERTIFICATE"] = "certificate";
+    FileType["EDUCATIONAL_DOCUMENTS"] = "educational_documents";
+    FileType["EXPERIENCE_DOCUMENTS"] = "experience_documents";
+    FileType["EMPLOYMENT_LETTER"] = "employment_letter";
     FileType["OTHER"] = "other";
 })(FileType || (exports.FileType = FileType = {}));
 let FileAttachment = class FileAttachment {

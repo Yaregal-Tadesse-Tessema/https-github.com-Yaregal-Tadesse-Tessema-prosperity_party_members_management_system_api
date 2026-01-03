@@ -103,12 +103,14 @@ let Member = class Member {
     status;
     registrationDate;
     notes;
+    educationalDocumentsFile;
+    experienceDocumentsFile;
     familyId;
     family;
     familyRelationship;
-    contributionPercentage;
     maritalStatus;
     salaryAmount;
+    contributionPercentage;
     employmentHistory;
     positionHistory;
     contributions;
@@ -260,6 +262,14 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
+], Member.prototype, "educationalDocumentsFile", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Member.prototype, "experienceDocumentsFile", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
 ], Member.prototype, "familyId", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => family_entity_1.Family, family => family.members, { nullable: true }),
@@ -274,10 +284,6 @@ __decorate([
     __metadata("design:type", String)
 ], Member.prototype, "familyRelationship", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 5, scale: 2, nullable: true }),
-    __metadata("design:type", Number)
-], Member.prototype, "contributionPercentage", void 0);
-__decorate([
     (0, typeorm_1.Column)({
         type: 'varchar',
         nullable: true
@@ -288,6 +294,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
     __metadata("design:type", Number)
 ], Member.prototype, "salaryAmount", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 5, scale: 2, nullable: true, default: 1.0 }),
+    __metadata("design:type", Number)
+], Member.prototype, "contributionPercentage", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => employment_info_entity_1.EmploymentInfo, employment => employment.member, { cascade: true }),
     __metadata("design:type", Array)

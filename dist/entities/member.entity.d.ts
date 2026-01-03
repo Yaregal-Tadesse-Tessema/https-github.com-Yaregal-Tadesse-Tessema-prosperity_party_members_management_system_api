@@ -83,12 +83,14 @@ export declare class Member {
     status: Status;
     registrationDate: Date;
     notes?: string;
+    educationalDocumentsFile?: string;
+    experienceDocumentsFile?: string;
     familyId?: string;
     family?: Family;
     familyRelationship?: FamilyRelationship;
-    contributionPercentage?: number;
     maritalStatus?: MaritalStatus;
     salaryAmount?: number;
+    contributionPercentage?: number;
     employmentHistory?: EmploymentInfo[];
     positionHistory: PositionHistory[];
     contributions: Contribution[];

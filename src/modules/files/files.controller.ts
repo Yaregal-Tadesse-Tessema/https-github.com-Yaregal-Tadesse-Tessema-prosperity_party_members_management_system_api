@@ -44,15 +44,16 @@ export class FilesController {
       return res.status(404).json({ message: 'Profile photo not found' });
     }
 
-    if (!fs.existsSync(fileAttachment.filePath)) {
-      return res.status(404).json({ message: 'File not found on disk' });
+    // Download file from MinIO
+    const fileBuffer = await this.filesService.downloadProfilePhoto(memberId);
+
+    if (!fileBuffer) {
+      return res.status(404).json({ message: 'Profile photo not found in storage' });
     }
 
     res.setHeader('Content-Type', fileAttachment.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${fileAttachment.originalFilename}"`);
-
-    const fileStream = fs.createReadStream(fileAttachment.filePath);
-    fileStream.pipe(res);
+    res.send(fileBuffer);
   }
 
   @Delete('members/:memberId/profile-photo')
@@ -63,6 +64,27 @@ export class FilesController {
     this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
     await this.filesService.deleteProfilePhoto(memberId, req.user.id);
     return { message: 'Profile photo deleted successfully' };
+  }
+
+  @Delete(':id')
+  async deleteFile(
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    await this.filesService.deleteFile(id, req.user.id);
+    return { message: 'File deleted successfully' };
+  }
+
+  @Post('members/:memberId/documents')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadDocument(
+    @Param('memberId') memberId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    return this.filesService.uploadDocument(memberId, file, req.user.id);
   }
 
   @Get('members/:memberId/attachments')

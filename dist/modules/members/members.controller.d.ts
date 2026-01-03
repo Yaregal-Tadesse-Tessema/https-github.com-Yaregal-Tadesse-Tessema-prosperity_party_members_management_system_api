@@ -1,3 +1,4 @@
+import { Response as ExpressResponse } from 'express';
 import { MembersService, CreateMemberDto, UpdateMemberDto, CreateEmploymentDto } from './members.service';
 export declare class MembersController {
     private readonly membersService;
@@ -44,6 +45,28 @@ export declare class MembersController {
     deleteEmployment(id: string, employmentId: string, req: any): Promise<{
         message: string;
     }>;
+    uploadEducationalDocuments(id: string, file: Express.Multer.File, req: any): Promise<{
+        message: string;
+        filename: string;
+        originalFilename: string;
+        fileSize: number;
+    }>;
+    uploadExperienceDocuments(id: string, file: Express.Multer.File, req: any): Promise<{
+        message: string;
+        filename: string;
+        originalFilename: string;
+        fileSize: number;
+    }>;
+    downloadEducationalDocuments(id: string, res: ExpressResponse): Promise<ExpressResponse<any, Record<string, any>> | undefined>;
+    downloadExperienceDocuments(id: string, res: ExpressResponse): Promise<ExpressResponse<any, Record<string, any>> | undefined>;
+    deleteEducationalDocuments(id: string, req: any): Promise<{
+        message: string;
+    }>;
+    deleteExperienceDocuments(id: string, req: any): Promise<{
+        message: string;
+    }>;
+    exportMembersPDF(filters: any, req: any, res: ExpressResponse): Promise<void>;
+    exportMembersExcel(filters: any, req: any, res: ExpressResponse): Promise<void>;
     private checkPermission;
     private hasRole;
 }

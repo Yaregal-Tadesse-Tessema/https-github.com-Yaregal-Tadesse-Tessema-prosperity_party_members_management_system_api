@@ -8,9 +8,17 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Request,
+  Response,
   ForbiddenException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Response as ExpressResponse } from 'express';
+import * as fs from 'fs';
+import * as puppeteer from 'puppeteer';
+import * as ExcelJS from 'exceljs';
 import { MembersService, CreateMemberDto, UpdateMemberDto, CreateEmploymentDto } from './members.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRole } from '../../entities/user.entity';
@@ -177,6 +185,133 @@ export class MembersController {
     this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
     await this.membersService.deleteEmploymentInfo(id, employmentId, req.user.id, req.user.username);
     return { message: 'Employment record deleted successfully' };
+  }
+
+  @Post(':id/upload-educational-documents')
+  @UseInterceptors(FileInterceptor('educationalDocumentsFile'))
+  async uploadEducationalDocuments(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    return this.membersService.uploadEducationalDocuments(id, file, req.user.id, req.user.username);
+  }
+
+  @Post(':id/upload-experience-documents')
+  @UseInterceptors(FileInterceptor('experienceDocumentsFile'))
+  async uploadExperienceDocuments(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    return this.membersService.uploadExperienceDocuments(id, file, req.user.id, req.user.username);
+  }
+
+  @Get(':id/educational-documents')
+  async downloadEducationalDocuments(
+    @Param('id') id: string,
+    @Response() res: ExpressResponse,
+  ) {
+    const fileBuffer = await this.membersService.downloadEducationalDocuments(id);
+
+    if (!fileBuffer) {
+      return res.status(404).json({ message: 'Educational documents not found' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="educational-documents-${id}.pdf"`);
+    res.send(fileBuffer);
+  }
+
+  @Get(':id/experience-documents')
+  async downloadExperienceDocuments(
+    @Param('id') id: string,
+    @Response() res: ExpressResponse,
+  ) {
+    const fileBuffer = await this.membersService.downloadExperienceDocuments(id);
+
+    if (!fileBuffer) {
+      return res.status(404).json({ message: 'Experience documents not found' });
+    }
+
+    const member = await this.membersService.findOne(id);
+    const fileExtension = member?.experienceDocumentsFile?.split('.').pop() || 'pdf';
+    let mimeType = 'application/octet-stream';
+
+    switch (fileExtension.toLowerCase()) {
+      case 'pdf':
+        mimeType = 'application/pdf';
+        break;
+      case 'doc':
+        mimeType = 'application/msword';
+        break;
+      case 'docx':
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+      case 'jpg':
+      case 'jpeg':
+        mimeType = 'image/jpeg';
+        break;
+      case 'png':
+        mimeType = 'image/png';
+        break;
+    }
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="experience-documents-${id}.${fileExtension}"`);
+    res.send(fileBuffer);
+  }
+
+  @Delete(':id/delete-educational-documents')
+  async deleteEducationalDocuments(
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    return this.membersService.deleteEducationalDocuments(id, req.user.id, req.user.username);
+  }
+
+  @Delete(':id/delete-experience-documents')
+  async deleteExperienceDocuments(
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    return this.membersService.deleteExperienceDocuments(id, req.user.id, req.user.username);
+  }
+
+  @Post('export/pdf')
+  async exportMembersPDF(
+    @Body() filters: any,
+    @Request() req,
+    @Response() res: ExpressResponse,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer', 'finance_officer']);
+
+    const members = await this.membersService.getFilteredMembers(filters);
+    const pdfBuffer = await this.membersService.generateMembersPDF(members);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="members_report_${new Date().toISOString().split('T')[0]}.pdf"`);
+    res.send(pdfBuffer);
+  }
+
+  @Post('export/excel')
+  async exportMembersExcel(
+    @Body() filters: any,
+    @Request() req,
+    @Response() res: ExpressResponse,
+  ) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer', 'finance_officer']);
+
+    const members = await this.membersService.getFilteredMembers(filters);
+    const excelBuffer = await this.membersService.generateMembersExcel(members);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="members_report_${new Date().toISOString().split('T')[0]}.xlsx"`);
+    res.send(excelBuffer);
   }
 
   private checkPermission(user: any, allowedRoles: string[]) {

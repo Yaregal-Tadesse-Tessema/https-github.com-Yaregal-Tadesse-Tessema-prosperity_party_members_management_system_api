@@ -5,6 +5,9 @@ export enum FileType {
   PROFILE_PHOTO = 'profile_photo',
   ID_DOCUMENT = 'id_document',
   CERTIFICATE = 'certificate',
+  EDUCATIONAL_DOCUMENTS = 'educational_documents',
+  EXPERIENCE_DOCUMENTS = 'experience_documents',
+  EMPLOYMENT_LETTER = 'employment_letter',
   OTHER = 'other',
 }
 

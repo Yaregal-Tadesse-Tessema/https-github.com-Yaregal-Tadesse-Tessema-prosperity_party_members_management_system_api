@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MembersController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const members_service_1 = require("./members.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let MembersController = class MembersController {
@@ -106,6 +107,77 @@ let MembersController = class MembersController {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
         await this.membersService.deleteEmploymentInfo(id, employmentId, req.user.id, req.user.username);
         return { message: 'Employment record deleted successfully' };
+    }
+    async uploadEducationalDocuments(id, file, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        return this.membersService.uploadEducationalDocuments(id, file, req.user.id, req.user.username);
+    }
+    async uploadExperienceDocuments(id, file, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        return this.membersService.uploadExperienceDocuments(id, file, req.user.id, req.user.username);
+    }
+    async downloadEducationalDocuments(id, res) {
+        const fileBuffer = await this.membersService.downloadEducationalDocuments(id);
+        if (!fileBuffer) {
+            return res.status(404).json({ message: 'Educational documents not found' });
+        }
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="educational-documents-${id}.pdf"`);
+        res.send(fileBuffer);
+    }
+    async downloadExperienceDocuments(id, res) {
+        const fileBuffer = await this.membersService.downloadExperienceDocuments(id);
+        if (!fileBuffer) {
+            return res.status(404).json({ message: 'Experience documents not found' });
+        }
+        const member = await this.membersService.findOne(id);
+        const fileExtension = member?.experienceDocumentsFile?.split('.').pop() || 'pdf';
+        let mimeType = 'application/octet-stream';
+        switch (fileExtension.toLowerCase()) {
+            case 'pdf':
+                mimeType = 'application/pdf';
+                break;
+            case 'doc':
+                mimeType = 'application/msword';
+                break;
+            case 'docx':
+                mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                break;
+            case 'jpg':
+            case 'jpeg':
+                mimeType = 'image/jpeg';
+                break;
+            case 'png':
+                mimeType = 'image/png';
+                break;
+        }
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="experience-documents-${id}.${fileExtension}"`);
+        res.send(fileBuffer);
+    }
+    async deleteEducationalDocuments(id, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        return this.membersService.deleteEducationalDocuments(id, req.user.id, req.user.username);
+    }
+    async deleteExperienceDocuments(id, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        return this.membersService.deleteExperienceDocuments(id, req.user.id, req.user.username);
+    }
+    async exportMembersPDF(filters, req, res) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer', 'finance_officer']);
+        const members = await this.membersService.getFilteredMembers(filters);
+        const pdfBuffer = await this.membersService.generateMembersPDF(members);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="members_report_${new Date().toISOString().split('T')[0]}.pdf"`);
+        res.send(pdfBuffer);
+    }
+    async exportMembersExcel(filters, req, res) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer', 'finance_officer']);
+        const members = await this.membersService.getFilteredMembers(filters);
+        const excelBuffer = await this.membersService.generateMembersExcel(members);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="members_report_${new Date().toISOString().split('T')[0]}.xlsx"`);
+        res.send(excelBuffer);
     }
     checkPermission(user, allowedRoles) {
         if (!this.hasRole(user, allowedRoles)) {
@@ -209,6 +281,76 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], MembersController.prototype, "deleteEmployment", null);
+__decorate([
+    (0, common_1.Post)(':id/upload-educational-documents'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('educationalDocumentsFile')),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "uploadEducationalDocuments", null);
+__decorate([
+    (0, common_1.Post)(':id/upload-experience-documents'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('experienceDocumentsFile')),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "uploadExperienceDocuments", null);
+__decorate([
+    (0, common_1.Get)(':id/educational-documents'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Response)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "downloadEducationalDocuments", null);
+__decorate([
+    (0, common_1.Get)(':id/experience-documents'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Response)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "downloadExperienceDocuments", null);
+__decorate([
+    (0, common_1.Delete)(':id/delete-educational-documents'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "deleteEducationalDocuments", null);
+__decorate([
+    (0, common_1.Delete)(':id/delete-experience-documents'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "deleteExperienceDocuments", null);
+__decorate([
+    (0, common_1.Post)('export/pdf'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Response)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "exportMembersPDF", null);
+__decorate([
+    (0, common_1.Post)('export/excel'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __param(2, (0, common_1.Response)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "exportMembersExcel", null);
 exports.MembersController = MembersController = __decorate([
     (0, common_1.Controller)('members'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

@@ -364,6 +364,549 @@ let MembersService = class MembersService {
         console.log('Final result:', JSON.stringify(result, null, 2));
         return result;
     }
+    async uploadEducationalDocuments(memberId, file, userId, username) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member) {
+            throw new common_1.NotFoundException('Member not found');
+        }
+        if (file.mimetype !== 'application/pdf') {
+            throw new common_1.BadRequestException('Only PDF files are allowed for educational documents');
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            throw new common_1.BadRequestException('File size must not exceed 10MB');
+        }
+        const bucketName = 'prosperityparty';
+        if (member.educationalDocumentsFile) {
+            try {
+                const urlParts = member.educationalDocumentsFile.split('/');
+                const existingFilename = urlParts[urlParts.length - 1];
+                const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+                const s3Client = new S3Client({
+                    region: process.env.AWS_REGION || 'us-east-1',
+                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    credentials: {
+                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                    },
+                    forcePathStyle: true,
+                });
+                const deleteCommand = new DeleteObjectCommand({
+                    Bucket: bucketName,
+                    Key: `educational-documents/${existingFilename}`,
+                });
+                await s3Client.send(deleteCommand);
+                console.log(`Deleted old educational document from MinIO: educational-documents/${existingFilename}`);
+            }
+            catch (error) {
+                console.error('Error deleting old educational document from MinIO:', error);
+            }
+        }
+        const timestamp = Date.now();
+        const filename = `educational-${memberId}-${timestamp}.pdf`;
+        const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+        const s3Client = new S3Client({
+            region: process.env.AWS_REGION || 'us-east-1',
+            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            credentials: {
+                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            },
+            forcePathStyle: true,
+        });
+        const uploadCommand = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: `educational-documents/${filename}`,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            ACL: 'public-read',
+        });
+        await s3Client.send(uploadCommand);
+        const minioUrl = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/educational-documents/${filename}`;
+        await this.memberRepository.update(memberId, {
+            educationalDocumentsFile: minioUrl,
+            updatedBy: userId,
+        });
+        await this.auditLogService.logAction({
+            userId,
+            username,
+            action: audit_log_entity_1.AuditAction.UPDATE,
+            entity: audit_log_entity_1.AuditEntity.MEMBER,
+            entityId: memberId,
+            notes: `Uploaded educational documents: ${file.originalname}`,
+        });
+        return {
+            message: 'Educational documents uploaded successfully',
+            filename: filename,
+            originalFilename: file.originalname,
+            fileSize: file.size,
+        };
+    }
+    async uploadExperienceDocuments(memberId, file, userId, username) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member) {
+            throw new common_1.NotFoundException('Member not found');
+        }
+        const allowedMimeTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/png',
+        ];
+        if (!allowedMimeTypes.includes(file.mimetype)) {
+            throw new common_1.BadRequestException('File type not allowed. Only PDF, DOC, DOCX, JPG, and PNG files are accepted.');
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            throw new common_1.BadRequestException('File size must not exceed 10MB');
+        }
+        const bucketName = 'prosperityparty';
+        if (member.experienceDocumentsFile) {
+            try {
+                const urlParts = member.experienceDocumentsFile.split('/');
+                const existingFilename = urlParts[urlParts.length - 1];
+                const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+                const s3Client = new S3Client({
+                    region: process.env.AWS_REGION || 'us-east-1',
+                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    credentials: {
+                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                    },
+                    forcePathStyle: true,
+                });
+                const deleteCommand = new DeleteObjectCommand({
+                    Bucket: bucketName,
+                    Key: `experience-documents/${existingFilename}`,
+                });
+                await s3Client.send(deleteCommand);
+                console.log(`Deleted old experience document from MinIO: experience-documents/${existingFilename}`);
+            }
+            catch (error) {
+                console.error('Error deleting old experience document from MinIO:', error);
+            }
+        }
+        const timestamp = Date.now();
+        const fileExtension = require('path').extname(file.originalname);
+        const filename = `experience-${memberId}-${timestamp}${fileExtension}`;
+        const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+        const s3Client = new S3Client({
+            region: process.env.AWS_REGION || 'us-east-1',
+            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            credentials: {
+                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            },
+            forcePathStyle: true,
+        });
+        const uploadCommand = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: `experience-documents/${filename}`,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            ACL: 'public-read',
+        });
+        await s3Client.send(uploadCommand);
+        const minioUrl = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/experience-documents/${filename}`;
+        await this.memberRepository.update(memberId, {
+            experienceDocumentsFile: minioUrl,
+            updatedBy: userId,
+        });
+        await this.auditLogService.logAction({
+            userId,
+            username,
+            action: audit_log_entity_1.AuditAction.UPDATE,
+            entity: audit_log_entity_1.AuditEntity.MEMBER,
+            entityId: memberId,
+            notes: `Uploaded experience documents: ${file.originalname}`,
+        });
+        return {
+            message: 'Experience documents uploaded successfully',
+            filename: filename,
+            originalFilename: file.originalname,
+            fileSize: file.size,
+        };
+    }
+    async getEducationalDocuments(memberId) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member || !member.educationalDocumentsFile) {
+            return null;
+        }
+        return {
+            filePath: member.educationalDocumentsFile,
+            mimeType: 'application/pdf',
+            originalFilename: `educational-documents-${memberId}.pdf`,
+        };
+    }
+    async downloadEducationalDocuments(memberId) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member || !member.educationalDocumentsFile) {
+            return null;
+        }
+        const urlParts = member.educationalDocumentsFile.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const bucketName = 'prosperityparty';
+        const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+        const s3Client = new S3Client({
+            region: process.env.AWS_REGION || 'us-east-1',
+            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            credentials: {
+                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            },
+            forcePathStyle: true,
+        });
+        try {
+            const getCommand = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: `educational-documents/${filename}`,
+            });
+            const response = await s3Client.send(getCommand);
+            const chunks = [];
+            if (response.Body) {
+                const stream = response.Body;
+                for await (const chunk of stream) {
+                    chunks.push(chunk);
+                }
+                return Buffer.concat(chunks);
+            }
+            return null;
+        }
+        catch (error) {
+            console.error('Error downloading educational documents from MinIO:', error);
+            return null;
+        }
+    }
+    async getExperienceDocuments(memberId) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member || !member.experienceDocumentsFile) {
+            return null;
+        }
+        const urlParts = member.experienceDocumentsFile.split('.');
+        const fileExtension = urlParts[urlParts.length - 1].toLowerCase();
+        let mimeType = 'application/octet-stream';
+        switch (fileExtension) {
+            case 'pdf':
+                mimeType = 'application/pdf';
+                break;
+            case 'doc':
+                mimeType = 'application/msword';
+                break;
+            case 'docx':
+                mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                break;
+            case 'jpg':
+            case 'jpeg':
+                mimeType = 'image/jpeg';
+                break;
+            case 'png':
+                mimeType = 'image/png';
+                break;
+        }
+        return {
+            filePath: member.experienceDocumentsFile,
+            mimeType,
+            originalFilename: `experience-documents-${memberId}.${fileExtension}`,
+        };
+    }
+    async downloadExperienceDocuments(memberId) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member || !member.experienceDocumentsFile) {
+            return null;
+        }
+        const urlParts = member.experienceDocumentsFile.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const bucketName = 'prosperityparty';
+        const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+        const s3Client = new S3Client({
+            region: process.env.AWS_REGION || 'us-east-1',
+            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            credentials: {
+                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            },
+            forcePathStyle: true,
+        });
+        try {
+            const getCommand = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: `experience-documents/${filename}`,
+            });
+            const response = await s3Client.send(getCommand);
+            const chunks = [];
+            if (response.Body) {
+                const stream = response.Body;
+                for await (const chunk of stream) {
+                    chunks.push(chunk);
+                }
+                return Buffer.concat(chunks);
+            }
+            return null;
+        }
+        catch (error) {
+            console.error('Error downloading experience documents from MinIO:', error);
+            return null;
+        }
+    }
+    async deleteEducationalDocuments(memberId, userId, username) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member) {
+            throw new common_1.NotFoundException('Member not found');
+        }
+        if (member.educationalDocumentsFile) {
+            const urlParts = member.educationalDocumentsFile.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            try {
+                const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+                const s3Client = new S3Client({
+                    region: process.env.AWS_REGION || 'us-east-1',
+                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    credentials: {
+                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                    },
+                    forcePathStyle: true,
+                });
+                const deleteCommand = new DeleteObjectCommand({
+                    Bucket: 'prosperityparty',
+                    Key: `educational-documents/${filename}`,
+                });
+                await s3Client.send(deleteCommand);
+            }
+            catch (error) {
+                console.error('Error deleting educational document from MinIO:', error);
+            }
+            await this.memberRepository.update(memberId, {
+                educationalDocumentsFile: null,
+                updatedBy: userId,
+            });
+            await this.auditLogService.logAction({
+                userId,
+                username,
+                action: audit_log_entity_1.AuditAction.DELETE,
+                entity: audit_log_entity_1.AuditEntity.MEMBER,
+                entityId: memberId,
+                notes: 'Deleted educational documents',
+            });
+        }
+        return { message: 'Educational documents deleted successfully' };
+    }
+    async deleteExperienceDocuments(memberId, userId, username) {
+        const member = await this.memberRepository.findOne({ where: { id: memberId } });
+        if (!member) {
+            throw new common_1.NotFoundException('Member not found');
+        }
+        if (member.experienceDocumentsFile) {
+            const urlParts = member.experienceDocumentsFile.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            try {
+                const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+                const s3Client = new S3Client({
+                    region: process.env.AWS_REGION || 'us-east-1',
+                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    credentials: {
+                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
+                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                    },
+                    forcePathStyle: true,
+                });
+                const deleteCommand = new DeleteObjectCommand({
+                    Bucket: 'prosperityparty',
+                    Key: `experience-documents/${filename}`,
+                });
+                await s3Client.send(deleteCommand);
+            }
+            catch (error) {
+                console.error('Error deleting experience document from MinIO:', error);
+            }
+            await this.memberRepository.update(memberId, {
+                experienceDocumentsFile: null,
+                updatedBy: userId,
+            });
+            await this.auditLogService.logAction({
+                userId,
+                username,
+                action: audit_log_entity_1.AuditAction.DELETE,
+                entity: audit_log_entity_1.AuditEntity.MEMBER,
+                entityId: memberId,
+                notes: 'Deleted experience documents',
+            });
+        }
+        return { message: 'Experience documents deleted successfully' };
+    }
+    async getFilteredMembers(filters) {
+        const queryBuilder = this.memberRepository.createQueryBuilder('member')
+            .leftJoinAndSelect('member.employmentHistory', 'employment')
+            .leftJoinAndSelect('member.positionHistory', 'position');
+        if (filters.membershipStatusFilter && filters.membershipStatusFilter !== '') {
+            queryBuilder.andWhere('member.membershipStatus = :membershipStatus', {
+                membershipStatus: filters.membershipStatusFilter
+            });
+        }
+        if (filters.activityStatusFilter && filters.activityStatusFilter !== '') {
+            queryBuilder.andWhere('member.status = :status', {
+                status: filters.activityStatusFilter
+            });
+        }
+        if (filters.genderFilter && filters.genderFilter !== '') {
+            queryBuilder.andWhere('member.gender = :gender', {
+                gender: filters.genderFilter
+            });
+        }
+        if (filters.searchQuery && filters.searchQuery.trim() !== '') {
+            queryBuilder.andWhere('(member.fullNameEnglish LIKE :search OR member.fullNameAmharic LIKE :search OR member.partyId LIKE :search OR member.primaryPhone LIKE :search)', { search: `%${filters.searchQuery}%` });
+        }
+        queryBuilder.orderBy('member.createdAt', 'DESC');
+        return await queryBuilder.getMany();
+    }
+    async generateMembersPDF(members) {
+        const puppeteer = require('puppeteer');
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage();
+        const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Members Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #2563eb; text-align: center; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f8fafc; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            .header-info { margin-bottom: 20px; }
+            .status-active { color: #059669; }
+            .status-inactive { color: #dc2626; }
+            .status-suspended { color: #d97706; }
+          </style>
+        </head>
+        <body>
+          <h1>Members Report</h1>
+          <div class="header-info">
+            <p><strong>Report Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <p><strong>Total Members:</strong> ${members.length}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Party ID</th>
+                <th>Full Name (English)</th>
+                <th>Full Name (Amharic)</th>
+                <th>Gender</th>
+                <th>Membership Status</th>
+                <th>Activity Status</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Registration Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${members.map(member => `
+                <tr>
+                  <td>${member.partyId}</td>
+                  <td>${member.fullNameEnglish}</td>
+                  <td>${member.fullNameAmharic || ''}</td>
+                  <td>${member.gender || ''}</td>
+                  <td>${member.membershipStatus || ''}</td>
+                  <td class="status-${member.status || ''}">${member.status || ''}</td>
+                  <td>${member.primaryPhone || ''}</td>
+                  <td>${member.email || ''}</td>
+                  <td>${member.registrationDate ? new Date(member.registrationDate).toLocaleDateString() : ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+        await page.setContent(htmlContent);
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+                top: '20px',
+                right: '20px',
+                bottom: '20px',
+                left: '20px'
+            }
+        });
+        await browser.close();
+        return pdfBuffer;
+    }
+    async generateMembersExcel(members) {
+        const ExcelJS = require('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Members Report');
+        worksheet.mergeCells('A1:I1');
+        const titleCell = worksheet.getCell('A1');
+        titleCell.value = 'Members Report';
+        titleCell.font = { size: 16, bold: true };
+        titleCell.alignment = { horizontal: 'center' };
+        worksheet.getCell('A3').value = 'Report Date:';
+        worksheet.getCell('B3').value = new Date().toLocaleDateString();
+        worksheet.getCell('A4').value = 'Total Members:';
+        worksheet.getCell('B4').value = members.length;
+        const headers = [
+            'Party ID',
+            'Full Name (English)',
+            'Full Name (Amharic)',
+            'Gender',
+            'Membership Status',
+            'Activity Status',
+            'Phone',
+            'Email',
+            'Registration Date'
+        ];
+        headers.forEach((header, index) => {
+            const cell = worksheet.getCell(6, index + 1);
+            cell.value = header;
+            cell.font = { bold: true };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFF8FAFC' }
+            };
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        });
+        members.forEach((member, rowIndex) => {
+            const row = 7 + rowIndex;
+            worksheet.getCell(row, 1).value = member.partyId;
+            worksheet.getCell(row, 2).value = member.fullNameEnglish;
+            worksheet.getCell(row, 3).value = member.fullNameAmharic || '';
+            worksheet.getCell(row, 4).value = member.gender || '';
+            worksheet.getCell(row, 5).value = member.membershipStatus || '';
+            worksheet.getCell(row, 6).value = member.status || '';
+            worksheet.getCell(row, 7).value = member.primaryPhone || '';
+            worksheet.getCell(row, 8).value = member.email || '';
+            worksheet.getCell(row, 9).value = member.registrationDate
+                ? new Date(member.registrationDate).toLocaleDateString()
+                : '';
+            for (let col = 1; col <= 9; col++) {
+                const cell = worksheet.getCell(row, col);
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            }
+        });
+        worksheet.columns.forEach(column => {
+            column.width = 15;
+        });
+        const buffer = await workbook.xlsx.writeBuffer();
+        return buffer;
+    }
 };
 exports.MembersService = MembersService;
 exports.MembersService = MembersService = __decorate([

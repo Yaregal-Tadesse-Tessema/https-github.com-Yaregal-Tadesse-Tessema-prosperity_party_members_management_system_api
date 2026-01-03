@@ -32,18 +32,27 @@ let FilesController = class FilesController {
         if (!fileAttachment) {
             return res.status(404).json({ message: 'Profile photo not found' });
         }
-        if (!fs.existsSync(fileAttachment.filePath)) {
-            return res.status(404).json({ message: 'File not found on disk' });
+        const fileBuffer = await this.filesService.downloadProfilePhoto(memberId);
+        if (!fileBuffer) {
+            return res.status(404).json({ message: 'Profile photo not found in storage' });
         }
         res.setHeader('Content-Type', fileAttachment.mimeType);
         res.setHeader('Content-Disposition', `inline; filename="${fileAttachment.originalFilename}"`);
-        const fileStream = fs.createReadStream(fileAttachment.filePath);
-        fileStream.pipe(res);
+        res.send(fileBuffer);
     }
     async deleteProfilePhoto(memberId, req) {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
         await this.filesService.deleteProfilePhoto(memberId, req.user.id);
         return { message: 'Profile photo deleted successfully' };
+    }
+    async deleteFile(id, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        await this.filesService.deleteFile(id, req.user.id);
+        return { message: 'File deleted successfully' };
+    }
+    async uploadDocument(memberId, file, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        return this.filesService.uploadDocument(memberId, file, req.user.id);
     }
     async getMemberAttachments(memberId) {
         return this.filesService.getMemberAttachments(memberId);
@@ -94,6 +103,24 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "deleteProfilePhoto", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], FilesController.prototype, "deleteFile", null);
+__decorate([
+    (0, common_1.Post)('members/:memberId/documents'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, common_1.Param)('memberId')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], FilesController.prototype, "uploadDocument", null);
 __decorate([
     (0, common_1.Get)('members/:memberId/attachments'),
     __param(0, (0, common_1.Param)('memberId')),

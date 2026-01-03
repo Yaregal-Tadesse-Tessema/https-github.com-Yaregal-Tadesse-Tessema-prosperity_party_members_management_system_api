@@ -8,6 +8,10 @@ export declare class FilesController {
     deleteProfilePhoto(memberId: string, req: any): Promise<{
         message: string;
     }>;
+    deleteFile(id: string, req: any): Promise<{
+        message: string;
+    }>;
+    uploadDocument(memberId: string, file: Express.Multer.File, req: any): Promise<import("../../entities/file-attachment.entity").FileAttachment>;
     getMemberAttachments(memberId: string): Promise<import("../../entities/file-attachment.entity").FileAttachment[]>;
     downloadFile(id: string, res: ExpressResponse): Promise<ExpressResponse<any, Record<string, any>> | undefined>;
     private checkPermission;
