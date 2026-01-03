@@ -53,6 +53,9 @@ let ContributionsController = class ContributionsController {
     async generateContributions(generateDto, req) {
         return this.contributionsService.generateMonthlyContributions(generateDto.month, generateDto.year, req.user.id, req.user.username);
     }
+    async generateBulkContributions(generateDto, req) {
+        return this.contributionsService.generateBulkPaidContributions(generateDto.month, generateDto.year, req.user.id, req.user.username);
+    }
     async downloadPDF(id, req, res) {
         const pdfBuffer = await this.contributionsService.generateContributionPDF(id);
         res.setHeader('Content-Type', 'application/pdf');
@@ -135,6 +138,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ContributionsController.prototype, "generateContributions", null);
+__decorate([
+    (0, common_1.Post)('generate-bulk'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], ContributionsController.prototype, "generateBulkContributions", null);
 __decorate([
     (0, common_1.Get)(':id/pdf'),
     __param(0, (0, common_1.Param)('id')),

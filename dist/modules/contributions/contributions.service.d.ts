@@ -66,4 +66,14 @@ export declare class ContributionsService {
     }>;
     generateContributionPDF(contributionId: string): Promise<Buffer>;
     private getMonthName;
+    generateBulkPaidContributions(month: number, year: number, userId: string, username: string): Promise<{
+        message: string;
+        statistics: {
+            totalMembers: number;
+            created: number;
+            skipped: number;
+            errors: number;
+        };
+        errors: string[] | undefined;
+    }>;
 }

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Contribution, PaymentStatus, PaymentMethod, ContributionType } from '../../entities/contribution.entity';
-import { Member, MembershipStatus } from '../../entities/member.entity';
+import { Member, MembershipStatus, Status } from '../../entities/member.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuditAction, AuditEntity } from '../../entities/audit-log.entity';
 import * as puppeteer from 'puppeteer';
@@ -663,5 +663,94 @@ export class ContributionsService {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     return months[month - 1] || 'Unknown';
+  }
+
+  async generateBulkPaidContributions(month: number, year: number, userId: string, username: string) {
+    // Get all active members (membershipStatus = 'member' AND status = 'active')
+    const activeMembers = await this.memberRepository.find({
+      where: {
+        membershipStatus: MembershipStatus.MEMBER,
+        status: Status.ACTIVE
+      },
+    });
+
+    if (activeMembers.length === 0) {
+      throw new NotFoundException('No active members found');
+    }
+
+    let created = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (const member of activeMembers) {
+      try {
+        // Check if contribution already exists for this member and period
+        const existingContribution = await this.contributionRepository.findOne({
+          where: {
+            memberId: member.id,
+            paymentMonth: month,
+            paymentYear: year,
+          },
+        });
+
+        if (existingContribution) {
+          skipped++;
+          continue;
+        }
+
+        // Calculate contribution amount based on salary and contribution percentage
+        const salaryAmount = typeof member.salaryAmount === 'number'
+          ? member.salaryAmount
+          : parseFloat(member.salaryAmount || '0') || 0;
+        const contributionPercentage = member.contributionPercentage;
+
+        // If percentage is null or 0, use 1%
+        const effectivePercentage = (contributionPercentage !== null && contributionPercentage !== undefined && contributionPercentage !== 0)
+          ? contributionPercentage
+          : 1;
+
+        const calculatedAmount = Math.round((salaryAmount * effectivePercentage) / 100);
+
+        // Create paid contribution
+        const contribution = this.contributionRepository.create({
+          memberId: member.id,
+          member,
+          paymentMonth: month,
+          paymentYear: year,
+          contributionType: ContributionType.PERCENTAGE_OF_SALARY,
+          expectedAmount: calculatedAmount,
+          paidAmount: calculatedAmount,
+          paymentStatus: PaymentStatus.PAID,
+          createdBy: userId,
+        });
+
+        await this.contributionRepository.save(contribution);
+        created++;
+
+      } catch (error: any) {
+        errors.push(`Failed to create contribution for ${member.fullNameEnglish}: ${error.message}`);
+      }
+    }
+
+    // Log the bulk generation
+    await this.auditLogService.logAction({
+      userId,
+      username,
+      action: AuditAction.CREATE,
+      entity: AuditEntity.CONTRIBUTION,
+      entityId: `bulk-${month}-${year}`,
+      newValues: { created, skipped, totalMembers: activeMembers.length },
+    });
+
+    return {
+      message: `Bulk generation completed for ${month}/${year}`,
+      statistics: {
+        totalMembers: activeMembers.length,
+        created,
+        skipped,
+        errors: errors.length,
+      },
+      errors: errors.length > 0 ? errors : undefined,
+    };
   }
 }

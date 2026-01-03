@@ -85,6 +85,11 @@ export class ContributionsController {
     return this.contributionsService.generateMonthlyContributions(generateDto.month, generateDto.year, req.user.id, req.user.username);
   }
 
+  @Post('generate-bulk')
+  async generateBulkContributions(@Body() generateDto: { month: number; year: number }, @Request() req) {
+    return this.contributionsService.generateBulkPaidContributions(generateDto.month, generateDto.year, req.user.id, req.user.username);
+  }
+
   @Get(':id/pdf')
   async downloadPDF(@Param('id') id: string, @Request() req, @Response() res) {
     const pdfBuffer = await this.contributionsService.generateContributionPDF(id);

@@ -44,5 +44,18 @@ export declare class ContributionsController {
         generatedCount: number;
         period: string;
     }>;
+    generateBulkContributions(generateDto: {
+        month: number;
+        year: number;
+    }, req: any): Promise<{
+        message: string;
+        statistics: {
+            totalMembers: number;
+            created: number;
+            skipped: number;
+            errors: number;
+        };
+        errors: string[] | undefined;
+    }>;
     downloadPDF(id: string, req: any, res: any): Promise<void>;
 }

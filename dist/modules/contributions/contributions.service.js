@@ -543,6 +543,77 @@ let ContributionsService = class ContributionsService {
         ];
         return months[month - 1] || 'Unknown';
     }
+    async generateBulkPaidContributions(month, year, userId, username) {
+        const activeMembers = await this.memberRepository.find({
+            where: {
+                membershipStatus: member_entity_1.MembershipStatus.MEMBER,
+                status: member_entity_1.Status.ACTIVE
+            },
+        });
+        if (activeMembers.length === 0) {
+            throw new common_1.NotFoundException('No active members found');
+        }
+        let created = 0;
+        let skipped = 0;
+        const errors = [];
+        for (const member of activeMembers) {
+            try {
+                const existingContribution = await this.contributionRepository.findOne({
+                    where: {
+                        memberId: member.id,
+                        paymentMonth: month,
+                        paymentYear: year,
+                    },
+                });
+                if (existingContribution) {
+                    skipped++;
+                    continue;
+                }
+                const salaryAmount = typeof member.salaryAmount === 'number'
+                    ? member.salaryAmount
+                    : parseFloat(member.salaryAmount || '0') || 0;
+                const contributionPercentage = member.contributionPercentage;
+                const effectivePercentage = (contributionPercentage !== null && contributionPercentage !== undefined && contributionPercentage !== 0)
+                    ? contributionPercentage
+                    : 1;
+                const calculatedAmount = Math.round((salaryAmount * effectivePercentage) / 100);
+                const contribution = this.contributionRepository.create({
+                    memberId: member.id,
+                    member,
+                    paymentMonth: month,
+                    paymentYear: year,
+                    contributionType: contribution_entity_1.ContributionType.PERCENTAGE_OF_SALARY,
+                    expectedAmount: calculatedAmount,
+                    paidAmount: calculatedAmount,
+                    paymentStatus: contribution_entity_1.PaymentStatus.PAID,
+                    createdBy: userId,
+                });
+                await this.contributionRepository.save(contribution);
+                created++;
+            }
+            catch (error) {
+                errors.push(`Failed to create contribution for ${member.fullNameEnglish}: ${error.message}`);
+            }
+        }
+        await this.auditLogService.logAction({
+            userId,
+            username,
+            action: audit_log_entity_1.AuditAction.CREATE,
+            entity: audit_log_entity_1.AuditEntity.CONTRIBUTION,
+            entityId: `bulk-${month}-${year}`,
+            newValues: { created, skipped, totalMembers: activeMembers.length },
+        });
+        return {
+            message: `Bulk generation completed for ${month}/${year}`,
+            statistics: {
+                totalMembers: activeMembers.length,
+                created,
+                skipped,
+                errors: errors.length,
+            },
+            errors: errors.length > 0 ? errors : undefined,
+        };
+    }
 };
 exports.ContributionsService = ContributionsService;
 exports.ContributionsService = ContributionsService = __decorate([
