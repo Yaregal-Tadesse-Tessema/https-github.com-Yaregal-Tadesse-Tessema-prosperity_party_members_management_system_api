@@ -44,10 +44,10 @@ exports.AppModule = AppModule = __decorate([
             }),
             typeorm_1.TypeOrmModule.forRoot({
                 type: 'postgres',
-                host: 'localhost',
+                host: '196.189.124.228',
                 port: 5432,
                 username: 'postgres',
-                password: 'yaya@1984',
+                password: 'root',
                 database: 'prosperity_party_members_management_system_dev',
                 entities: [
                     user_entity_1.User,
