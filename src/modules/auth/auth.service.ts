@@ -57,7 +57,6 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
     // Update last login
     await this.userRepository.update(user.id, {
       lastLoginAt: new Date(),
