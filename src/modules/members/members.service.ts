@@ -100,28 +100,54 @@ export class MembersService {
       throw new BadRequestException('Member must be at least 18 years old');
     }
 
+    // Convert all empty strings to null for optional/nullable fields
+    // This prevents PostgreSQL errors when empty strings are passed to UUID or nullable columns
+    const sanitizedDto: any = { ...createMemberDto };
+    
+    // List of required fields that should NOT be converted to null even if empty
+    const requiredFields = ['partyId', 'fullNameAmharic', 'fullNameEnglish', 'gender', 'dateOfBirth', 'primaryPhone', 'subCity', 'woreda', 'kebele', 'registrationDate'];
+    
+    // Convert all empty strings to null (except for required fields which should be validated separately)
+    Object.keys(sanitizedDto).forEach(key => {
+      const value = sanitizedDto[key];
+      if (typeof value === 'string') {
+        if (value.trim() === '') {
+          // Convert empty strings to null for optional fields
+          if (!requiredFields.includes(key)) {
+            sanitizedDto[key] = null;
+          }
+        } else {
+          // Trim non-empty strings
+          sanitizedDto[key] = value.trim();
+        }
+      }
+    });
+
     // Validate family assignment if provided
-    if (createMemberDto.familyId) {
+    if (sanitizedDto.familyId) {
       try {
         // Use findOne since familyId in member entity stores the UUID id, not the string familyId
-        await this.familiesService.findOne(createMemberDto.familyId);
+        await this.familiesService.findOne(sanitizedDto.familyId);
       } catch (error) {
         throw new BadRequestException('Invalid family ID provided');
       }
     }
 
-    const member = this.memberRepository.create({
-      ...createMemberDto,
+    const memberData: any = {
+      ...sanitizedDto,
       membershipStatus: MembershipStatus.SUPPORTIVE_MEMBER,
       createdBy: userId,
       updatedBy: userId,
-    });
+    };
 
-    const savedMember = await this.memberRepository.save(member);
+    const member = this.memberRepository.create(memberData);
+
+    const savedMemberResult = await this.memberRepository.save(member);
+    const savedMember = Array.isArray(savedMemberResult) ? savedMemberResult[0] : savedMemberResult;
 
     // Update family member count if family is assigned
-    if (createMemberDto.familyId) {
-      await this.familiesService.updateMemberCount(createMemberDto.familyId);
+    if (sanitizedDto.familyId) {
+      await this.familiesService.updateMemberCount(sanitizedDto.familyId);
     }
 
     // Log the creation
@@ -247,30 +273,36 @@ export class MembersService {
       familyId: member.familyId,
     };
 
-    // Handle empty string for familyId - convert to null to clear the relationship
-    const shouldClearFamilyId = updateMemberDto.familyId === '';
-    if (shouldClearFamilyId) {
-      // Remove familyId from DTO to avoid assigning empty string
-      delete updateMemberDto.familyId;
-    }
+    // Convert all empty strings to null for optional/nullable fields
+    // This prevents PostgreSQL errors when empty strings are passed to UUID or nullable columns
+    const sanitizedDto: any = { ...updateMemberDto };
+    
+    // Convert all empty strings to null for optional fields
+    Object.keys(sanitizedDto).forEach(key => {
+      const value = sanitizedDto[key];
+      if (typeof value === 'string') {
+        if (value.trim() === '') {
+          // Convert empty strings to null for optional fields
+          sanitizedDto[key] = null;
+        } else {
+          // Trim non-empty strings
+          sanitizedDto[key] = value.trim();
+        }
+      }
+    });
 
     // Validate new family assignment if provided
-    if (updateMemberDto.familyId) {
+    if (sanitizedDto.familyId) {
       try {
         // Use findOne since familyId in member entity stores the UUID id, not the string familyId
-        await this.familiesService.findOne(updateMemberDto.familyId);
+        await this.familiesService.findOne(sanitizedDto.familyId);
       } catch (error) {
         throw new BadRequestException('Invalid family ID provided');
       }
     }
 
     // Update member
-    Object.assign(member, updateMemberDto);
-    // Explicitly set familyId to null if it was an empty string (to clear the relationship)
-    // TypeORM accepts null for nullable columns, so we use type assertion
-    if (shouldClearFamilyId) {
-      (member as any).familyId = null;
-    }
+    Object.assign(member, sanitizedDto);
     member.updatedBy = userId;
 
     const updatedMember = await this.memberRepository.save(member);
@@ -568,11 +600,11 @@ export class MembersService {
 
         const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-          region: process.env.AWS_REGION || 'us-east-1',
-          endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+          region: 'us-east-1',
+          endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
           credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-            secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            accessKeyId: 'L458FO8B14A0S02NAM6J',
+            secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
           },
           forcePathStyle: true,
         });
@@ -596,11 +628,11 @@ export class MembersService {
 
     const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
     const s3Client = new S3Client({
-      region: process.env.AWS_REGION || 'us-east-1',
-      endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+      region: 'us-east-1',
+      endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+        accessKeyId: 'L458FO8B14A0S02NAM6J',
+        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
       },
       forcePathStyle: true,
     });
@@ -616,7 +648,7 @@ export class MembersService {
     await s3Client.send(uploadCommand);
 
     // Update member with file path
-    const minioUrl = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/educational-documents/${filename}`;
+    const minioUrl = `http://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || '196.189.124.228:9000'}/${bucketName}/educational-documents/${filename}`;
     await this.memberRepository.update(memberId, {
       educationalDocumentsFile: minioUrl,
       updatedBy: userId,
@@ -680,11 +712,11 @@ export class MembersService {
 
         const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-          region: process.env.AWS_REGION || 'us-east-1',
-          endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+          region: 'us-east-1',
+          endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
           credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-            secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            accessKeyId: 'L458FO8B14A0S02NAM6J',
+            secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
           },
           forcePathStyle: true,
         });
@@ -709,11 +741,11 @@ export class MembersService {
 
     const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
     const s3Client = new S3Client({
-      region: process.env.AWS_REGION || 'us-east-1',
-      endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+      region: 'us-east-1',
+      endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+        accessKeyId: 'L458FO8B14A0S02NAM6J',
+        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
       },
       forcePathStyle: true,
     });
@@ -729,7 +761,7 @@ export class MembersService {
     await s3Client.send(uploadCommand);
 
     // Update member with file path
-    const minioUrl = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/experience-documents/${filename}`;
+    const minioUrl = `http://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || '196.189.124.228:9000'}/${bucketName}/experience-documents/${filename}`;
     await this.memberRepository.update(memberId, {
       experienceDocumentsFile: minioUrl,
       updatedBy: userId,
@@ -780,11 +812,11 @@ export class MembersService {
     const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 
     const s3Client = new S3Client({
-      region: process.env.AWS_REGION || 'us-east-1',
-      endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+      region: 'us-east-1',
+      endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+        accessKeyId: 'L458FO8B14A0S02NAM6J',
+        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
       },
       forcePathStyle: true,
     });
@@ -864,11 +896,11 @@ export class MembersService {
     const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 
     const s3Client = new S3Client({
-      region: process.env.AWS_REGION || 'us-east-1',
-      endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+      region: 'us-east-1',
+      endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+        accessKeyId: 'L458FO8B14A0S02NAM6J',
+        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
       },
       forcePathStyle: true,
     });
@@ -916,11 +948,11 @@ export class MembersService {
       try {
         const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-          region: process.env.AWS_REGION || 'us-east-1',
-          endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+          region: 'us-east-1',
+          endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
           credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-            secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            accessKeyId: 'L458FO8B14A0S02NAM6J',
+            secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
           },
           forcePathStyle: true,
         });
@@ -974,11 +1006,11 @@ export class MembersService {
       try {
         const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-          region: process.env.AWS_REGION || 'us-east-1',
-          endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+          region: 'us-east-1',
+          endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
           credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-            secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            accessKeyId: 'L458FO8B14A0S02NAM6J',
+            secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
           },
           forcePathStyle: true,
         });

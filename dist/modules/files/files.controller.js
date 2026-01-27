@@ -25,7 +25,7 @@ let FilesController = class FilesController {
     }
     async uploadProfilePhoto(memberId, file, req) {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
-        return this.filesService.uploadProfilePhoto(memberId, file, req.user.id);
+        return await this.filesService.uploadProfilePhoto(memberId, file, req.user.id);
     }
     async getProfilePhoto(memberId, res) {
         const fileAttachment = await this.filesService.getProfilePhoto(memberId);

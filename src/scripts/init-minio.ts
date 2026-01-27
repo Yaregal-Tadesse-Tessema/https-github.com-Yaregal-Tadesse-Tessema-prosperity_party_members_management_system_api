@@ -2,11 +2,11 @@ import { S3Client, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/clien
 
 async function initMinio() {
   const s3Client = new S3Client({
-    region: process.env.AWS_REGION || 'us-east-1',
-    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+    region: 'us-east-1',
+    endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
     credentials: {
-      accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-      secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+      accessKeyId: 'L458FO8B14A0S02NAM6J',
+      secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
     },
     forcePathStyle: true,
   });

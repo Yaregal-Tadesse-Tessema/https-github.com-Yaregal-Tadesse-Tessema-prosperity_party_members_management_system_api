@@ -3,11 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_s3_1 = require("@aws-sdk/client-s3");
 async function initMinio() {
     const s3Client = new client_s3_1.S3Client({
-        region: process.env.AWS_REGION || 'us-east-1',
-        endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+        region: 'us-east-1',
+        endpoint: 'http://196.189.124.228:9000',
         credentials: {
-            accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-            secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+            accessKeyId: 'L458FO8B14A0S02NAM6J',
+            secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
         },
         forcePathStyle: true,
     });

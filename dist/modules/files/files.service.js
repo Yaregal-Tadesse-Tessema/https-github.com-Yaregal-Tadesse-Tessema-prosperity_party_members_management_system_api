@@ -29,11 +29,11 @@ let FilesService = class FilesService {
         this.fileAttachmentRepository = fileAttachmentRepository;
         this.memberRepository = memberRepository;
         this.s3Client = new client_s3_1.S3Client({
-            region: process.env.AWS_REGION || 'us-east-1',
-            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            region: 'us-east-1',
+            endpoint: 'http://196.189.124.228:9000',
             credentials: {
-                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                accessKeyId: 'AY1WUU308IX79DRABRGI',
+                secretAccessKey: 'neZmzgNaQpigqGext6G+HG6HM3Le7nXv3vhBNpaq',
             },
             forcePathStyle: true,
         });
@@ -63,35 +63,55 @@ let FilesService = class FilesService {
             try {
                 const deleteCommand = new client_s3_1.DeleteObjectCommand({
                     Bucket: bucketName,
-                    Key: `profile/${existingPhoto.filename}`,
+                    Key: `${memberId}/profile/${existingPhoto.filename}`,
                 });
                 await this.s3Client.send(deleteCommand);
-                console.log(`Deleted old profile photo from MinIO: profile/${existingPhoto.filename}`);
+                console.log(`Deleted old profile photo from MinIO: ${memberId}/profile/${existingPhoto.filename}`);
             }
             catch (error) {
-                console.error('Error deleting old profile photo from MinIO:', error);
+                try {
+                    const deleteCommand = new client_s3_1.DeleteObjectCommand({
+                        Bucket: bucketName,
+                        Key: `profile/${existingPhoto.filename}`,
+                    });
+                    await this.s3Client.send(deleteCommand);
+                    console.log(`Deleted old profile photo from MinIO (old path): profile/${existingPhoto.filename}`);
+                }
+                catch (oldPathError) {
+                    console.error('Error deleting old profile photo from MinIO:', oldPathError);
+                }
             }
             await this.fileAttachmentRepository.update(existingPhoto.id, { isActive: false });
         }
-        const uploadCommand = new client_s3_1.PutObjectCommand({
-            Bucket: bucketName,
-            Key: `profile/${filename}`,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            ACL: 'public-read',
-        });
-        await this.s3Client.send(uploadCommand);
+        try {
+            const uploadCommand = new client_s3_1.PutObjectCommand({
+                Bucket: bucketName,
+                Key: `${memberId}/profile/${filename}`,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            });
+            await this.s3Client.send(uploadCommand);
+        }
+        catch (error) {
+            console.error('Error uploading file to MinIO:', error);
+            throw new common_1.BadRequestException('Failed to upload profile photo to storage');
+        }
+        const minioEndpoint = process.env.MINIO_ENDPOINT || 'http://196.189.124.228:9000';
+        const cleanEndpoint = minioEndpoint.replace(/^https?:\/\//, '');
+        const filePath = `http://${cleanEndpoint}/${bucketName}/${memberId}/profile/${filename}`;
         const fileAttachment = this.fileAttachmentRepository.create({
             memberId,
             filename,
             originalFilename: file.originalname,
             mimeType: file.mimetype,
-            filePath: `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/profile/${filename}`,
+            filePath,
             fileSize: file.size,
             fileType: file_attachment_entity_1.FileType.PROFILE_PHOTO,
             uploadedBy,
+            isActive: true,
         });
-        return this.fileAttachmentRepository.save(fileAttachment);
+        const savedAttachment = await this.fileAttachmentRepository.save(fileAttachment);
+        return savedAttachment;
     }
     async getProfilePhoto(memberId) {
         const fileAttachment = await this.fileAttachmentRepository.findOne({
@@ -103,17 +123,29 @@ let FilesService = class FilesService {
             order: { createdAt: 'DESC' },
         });
         if (fileAttachment) {
-            const getCommand = new client_s3_1.GetObjectCommand({
+            let getCommand = new client_s3_1.GetObjectCommand({
                 Bucket: 'prosperityparty',
-                Key: `profile/${fileAttachment.filename}`,
+                Key: `${memberId}/profile/${fileAttachment.filename}`,
             });
             try {
                 const signedUrl = await (0, s3_request_presigner_1.getSignedUrl)(this.s3Client, getCommand, { expiresIn: 3600 });
                 fileAttachment.filePath = signedUrl;
             }
             catch (error) {
-                console.error('Error generating signed URL:', error);
-                fileAttachment.filePath = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/prosperityparty/profile/${fileAttachment.filename}`;
+                try {
+                    getCommand = new client_s3_1.GetObjectCommand({
+                        Bucket: 'prosperityparty',
+                        Key: `profile/${fileAttachment.filename}`,
+                    });
+                    const signedUrl = await (0, s3_request_presigner_1.getSignedUrl)(this.s3Client, getCommand, { expiresIn: 3600 });
+                    fileAttachment.filePath = signedUrl;
+                }
+                catch (oldPathError) {
+                    console.error('Error generating signed URL:', oldPathError);
+                    const minioEndpoint = process.env.MINIO_ENDPOINT || 'http://196.189.124.228:9000';
+                    const cleanEndpoint = minioEndpoint.replace(/^https?:\/\//, '');
+                    fileAttachment.filePath = `http://${cleanEndpoint}/prosperityparty/${memberId}/profile/${fileAttachment.filename}`;
+                }
             }
         }
         return fileAttachment;
@@ -140,20 +172,38 @@ let FilesService = class FilesService {
             return null;
         }
         try {
-            const getCommand = new client_s3_1.GetObjectCommand({
+            let getCommand = new client_s3_1.GetObjectCommand({
                 Bucket: 'prosperityparty',
-                Key: `profile/${fileAttachment.filename}`,
+                Key: `${memberId}/profile/${fileAttachment.filename}`,
             });
-            const response = await this.s3Client.send(getCommand);
-            const chunks = [];
-            if (response.Body) {
-                const stream = response.Body;
-                for await (const chunk of stream) {
-                    chunks.push(chunk);
+            try {
+                const response = await this.s3Client.send(getCommand);
+                const chunks = [];
+                if (response.Body) {
+                    const stream = response.Body;
+                    for await (const chunk of stream) {
+                        chunks.push(chunk);
+                    }
+                    return Buffer.concat(chunks);
                 }
-                return Buffer.concat(chunks);
+                return null;
             }
-            return null;
+            catch (error) {
+                getCommand = new client_s3_1.GetObjectCommand({
+                    Bucket: 'prosperityparty',
+                    Key: `profile/${fileAttachment.filename}`,
+                });
+                const response = await this.s3Client.send(getCommand);
+                const chunks = [];
+                if (response.Body) {
+                    const stream = response.Body;
+                    for await (const chunk of stream) {
+                        chunks.push(chunk);
+                    }
+                    return Buffer.concat(chunks);
+                }
+                return null;
+            }
         }
         catch (error) {
             console.error('Error downloading profile photo from MinIO:', error);
@@ -175,12 +225,21 @@ let FilesService = class FilesService {
         try {
             const deleteCommand = new client_s3_1.DeleteObjectCommand({
                 Bucket: 'prosperityparty',
-                Key: `profile/${fileAttachment.filename}`,
+                Key: `${memberId}/profile/${fileAttachment.filename}`,
             });
             await this.s3Client.send(deleteCommand);
         }
         catch (error) {
-            console.error('Error deleting file from MinIO:', error);
+            try {
+                const deleteCommand = new client_s3_1.DeleteObjectCommand({
+                    Bucket: 'prosperityparty',
+                    Key: `profile/${fileAttachment.filename}`,
+                });
+                await this.s3Client.send(deleteCommand);
+            }
+            catch (oldPathError) {
+                console.error('Error deleting file from MinIO:', oldPathError);
+            }
         }
         await this.fileAttachmentRepository.update(fileAttachment.id, {
             isActive: false,
@@ -241,7 +300,11 @@ let FilesService = class FilesService {
             filename,
             originalFilename: file.originalname,
             mimeType: file.mimetype,
-            filePath: `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/documents/${filename}`,
+            filePath: (() => {
+                const minioEndpoint = process.env.MINIO_ENDPOINT || 'http://196.189.124.228:9000';
+                const cleanEndpoint = minioEndpoint.replace(/^https?:\/\//, '');
+                return `http://${cleanEndpoint}/${bucketName}/documents/${filename}`;
+            })(),
             fileSize: file.size,
             fileType,
             uploadedBy,

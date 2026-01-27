@@ -30,7 +30,7 @@ export class FilesController {
     @Request() req,
   ) {
     this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
-    return this.filesService.uploadProfilePhoto(memberId, file, req.user.id);
+    return await this.filesService.uploadProfilePhoto(memberId, file, req.user.id);
   }
 
   @Get('members/:memberId/profile-photo')

@@ -45,23 +45,40 @@ let MembersService = class MembersService {
         if (age < 18) {
             throw new common_1.BadRequestException('Member must be at least 18 years old');
         }
-        if (createMemberDto.familyId) {
+        const sanitizedDto = { ...createMemberDto };
+        const requiredFields = ['partyId', 'fullNameAmharic', 'fullNameEnglish', 'gender', 'dateOfBirth', 'primaryPhone', 'subCity', 'woreda', 'kebele', 'registrationDate'];
+        Object.keys(sanitizedDto).forEach(key => {
+            const value = sanitizedDto[key];
+            if (typeof value === 'string') {
+                if (value.trim() === '') {
+                    if (!requiredFields.includes(key)) {
+                        sanitizedDto[key] = null;
+                    }
+                }
+                else {
+                    sanitizedDto[key] = value.trim();
+                }
+            }
+        });
+        if (sanitizedDto.familyId) {
             try {
-                await this.familiesService.findOne(createMemberDto.familyId);
+                await this.familiesService.findOne(sanitizedDto.familyId);
             }
             catch (error) {
                 throw new common_1.BadRequestException('Invalid family ID provided');
             }
         }
-        const member = this.memberRepository.create({
-            ...createMemberDto,
+        const memberData = {
+            ...sanitizedDto,
             membershipStatus: member_entity_1.MembershipStatus.SUPPORTIVE_MEMBER,
             createdBy: userId,
             updatedBy: userId,
-        });
-        const savedMember = await this.memberRepository.save(member);
-        if (createMemberDto.familyId) {
-            await this.familiesService.updateMemberCount(createMemberDto.familyId);
+        };
+        const member = this.memberRepository.create(memberData);
+        const savedMemberResult = await this.memberRepository.save(member);
+        const savedMember = Array.isArray(savedMemberResult) ? savedMemberResult[0] : savedMemberResult;
+        if (sanitizedDto.familyId) {
+            await this.familiesService.updateMemberCount(sanitizedDto.familyId);
         }
         await this.auditLogService.logAction({
             userId,
@@ -148,22 +165,27 @@ let MembersService = class MembersService {
             membershipStatus: member.membershipStatus,
             familyId: member.familyId,
         };
-        const shouldClearFamilyId = updateMemberDto.familyId === '';
-        if (shouldClearFamilyId) {
-            delete updateMemberDto.familyId;
-        }
-        if (updateMemberDto.familyId) {
+        const sanitizedDto = { ...updateMemberDto };
+        Object.keys(sanitizedDto).forEach(key => {
+            const value = sanitizedDto[key];
+            if (typeof value === 'string') {
+                if (value.trim() === '') {
+                    sanitizedDto[key] = null;
+                }
+                else {
+                    sanitizedDto[key] = value.trim();
+                }
+            }
+        });
+        if (sanitizedDto.familyId) {
             try {
-                await this.familiesService.findOne(updateMemberDto.familyId);
+                await this.familiesService.findOne(sanitizedDto.familyId);
             }
             catch (error) {
                 throw new common_1.BadRequestException('Invalid family ID provided');
             }
         }
-        Object.assign(member, updateMemberDto);
-        if (shouldClearFamilyId) {
-            member.familyId = null;
-        }
+        Object.assign(member, sanitizedDto);
         member.updatedBy = userId;
         const updatedMember = await this.memberRepository.save(member);
         const oldFamilyId = oldValues.familyId;
@@ -382,11 +404,11 @@ let MembersService = class MembersService {
                 const existingFilename = urlParts[urlParts.length - 1];
                 const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
                 const s3Client = new S3Client({
-                    region: process.env.AWS_REGION || 'us-east-1',
-                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    region: 'us-east-1',
+                    endpoint: 'http://196.189.124.228:9000',
                     credentials: {
-                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                        accessKeyId: 'L458FO8B14A0S02NAM6J',
+                        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
                     },
                     forcePathStyle: true,
                 });
@@ -405,11 +427,11 @@ let MembersService = class MembersService {
         const filename = `educational-${memberId}-${timestamp}.pdf`;
         const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-            region: process.env.AWS_REGION || 'us-east-1',
-            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            region: 'us-east-1',
+            endpoint: 'http://196.189.124.228:9000',
             credentials: {
-                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                accessKeyId: 'L458FO8B14A0S02NAM6J',
+                secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
             },
             forcePathStyle: true,
         });
@@ -421,7 +443,7 @@ let MembersService = class MembersService {
             ACL: 'public-read',
         });
         await s3Client.send(uploadCommand);
-        const minioUrl = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/educational-documents/${filename}`;
+        const minioUrl = `http://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || '196.189.124.228:9000'}/${bucketName}/educational-documents/${filename}`;
         await this.memberRepository.update(memberId, {
             educationalDocumentsFile: minioUrl,
             updatedBy: userId,
@@ -466,11 +488,11 @@ let MembersService = class MembersService {
                 const existingFilename = urlParts[urlParts.length - 1];
                 const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
                 const s3Client = new S3Client({
-                    region: process.env.AWS_REGION || 'us-east-1',
-                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    region: 'us-east-1',
+                    endpoint: 'http://196.189.124.228:9000',
                     credentials: {
-                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                        accessKeyId: 'L458FO8B14A0S02NAM6J',
+                        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
                     },
                     forcePathStyle: true,
                 });
@@ -490,11 +512,11 @@ let MembersService = class MembersService {
         const filename = `experience-${memberId}-${timestamp}${fileExtension}`;
         const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-            region: process.env.AWS_REGION || 'us-east-1',
-            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            region: 'us-east-1',
+            endpoint: 'http://196.189.124.228:9000',
             credentials: {
-                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                accessKeyId: 'L458FO8B14A0S02NAM6J',
+                secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
             },
             forcePathStyle: true,
         });
@@ -506,7 +528,7 @@ let MembersService = class MembersService {
             ACL: 'public-read',
         });
         await s3Client.send(uploadCommand);
-        const minioUrl = `https://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || 'localhost:9000'}/${bucketName}/experience-documents/${filename}`;
+        const minioUrl = `http://${process.env.MINIO_ENDPOINT?.replace('http://', '').replace('https://', '') || '196.189.124.228:9000'}/${bucketName}/experience-documents/${filename}`;
         await this.memberRepository.update(memberId, {
             experienceDocumentsFile: minioUrl,
             updatedBy: userId,
@@ -547,11 +569,11 @@ let MembersService = class MembersService {
         const bucketName = 'prosperityparty';
         const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-            region: process.env.AWS_REGION || 'us-east-1',
-            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            region: 'us-east-1',
+            endpoint: 'http://196.189.124.228:9000',
             credentials: {
-                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                accessKeyId: 'L458FO8B14A0S02NAM6J',
+                secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
             },
             forcePathStyle: true,
         });
@@ -618,11 +640,11 @@ let MembersService = class MembersService {
         const bucketName = 'prosperityparty';
         const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
         const s3Client = new S3Client({
-            region: process.env.AWS_REGION || 'us-east-1',
-            endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+            region: 'us-east-1',
+            endpoint: 'http://196.189.124.228:9000',
             credentials: {
-                accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                accessKeyId: 'L458FO8B14A0S02NAM6J',
+                secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
             },
             forcePathStyle: true,
         });
@@ -658,11 +680,11 @@ let MembersService = class MembersService {
             try {
                 const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
                 const s3Client = new S3Client({
-                    region: process.env.AWS_REGION || 'us-east-1',
-                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    region: 'us-east-1',
+                    endpoint: 'http://196.189.124.228:9000',
                     credentials: {
-                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                        accessKeyId: 'L458FO8B14A0S02NAM6J',
+                        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
                     },
                     forcePathStyle: true,
                 });
@@ -701,11 +723,11 @@ let MembersService = class MembersService {
             try {
                 const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
                 const s3Client = new S3Client({
-                    region: process.env.AWS_REGION || 'us-east-1',
-                    endpoint: process.env.MINIO_ENDPOINT || 'http://localhost:9000',
+                    region: 'us-east-1',
+                    endpoint: 'http://196.189.124.228:9000',
                     credentials: {
-                        accessKeyId: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-                        secretAccessKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
+                        accessKeyId: 'L458FO8B14A0S02NAM6J',
+                        secretAccessKey: 'rhkZ6HrrxSuNbWmaE8UYJaCWKLTUkyepO9pUIX34',
                     },
                     forcePathStyle: true,
                 });

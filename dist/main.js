@@ -6,9 +6,16 @@ const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const allowedOrigins = process.env.FRONTEND_URL
+        ? (process.env.FRONTEND_URL.includes(',') ? process.env.FRONTEND_URL.split(',') : process.env.FRONTEND_URL)
+        : (process.env.NODE_ENV === 'production'
+            ? ['http://localhost:3000']
+            : true);
     app.enableCors({
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        origin: allowedOrigins,
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     });
     app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(new common_1.ValidationPipe({
