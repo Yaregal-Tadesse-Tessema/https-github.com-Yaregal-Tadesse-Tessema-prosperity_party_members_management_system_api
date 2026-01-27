@@ -57,5 +57,5 @@ export declare class ContributionsController {
         };
         errors: string[] | undefined;
     }>;
-    downloadPDF(id: string, req: any, res: any): Promise<void>;
+    downloadPDF(id: string, req: any, res: any): Promise<any>;
 }

@@ -92,12 +92,27 @@ export class ContributionsController {
 
   @Get(':id/pdf')
   async downloadPDF(@Param('id') id: string, @Request() req, @Response() res) {
-    const pdfBuffer = await this.contributionsService.generateContributionPDF(id);
+    try {
+      const pdfBuffer = await this.contributionsService.generateContributionPDF(id);
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="contribution-${id}.pdf"`);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="contribution-${id}.pdf"`);
 
-    res.send(pdfBuffer);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      if (error.message && error.message.includes('Chrome')) {
+        return res.status(500).json({
+          message: 'PDF generation failed: Chrome browser not found. Please install Chrome or set CHROME_PATH environment variable.',
+          error: 'ChromeNotFound',
+          details: 'To install Chrome for Puppeteer, run: npx puppeteer browsers install chrome'
+        });
+      }
+      return res.status(500).json({
+        message: error.message || 'Failed to generate PDF',
+        error: 'PDFGenerationError'
+      });
+    }
   }
 }
 

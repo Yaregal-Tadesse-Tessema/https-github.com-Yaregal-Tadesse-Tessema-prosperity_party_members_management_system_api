@@ -628,33 +628,83 @@ export class ContributionsService {
     `;
 
     // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor'
-      ]
-    });
+    // Try to use system Chrome first, fallback to Puppeteer's bundled Chrome
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      });
+    } catch (error: any) {
+      // If Chrome is not found, try to use system Chrome
+      const possibleChromePaths = [
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        process.env.CHROME_PATH,
+      ].filter(Boolean);
 
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px'
+      let browserLaunched = false;
+      for (const chromePath of possibleChromePaths) {
+        try {
+          const fs = require('fs');
+          if (fs.existsSync(chromePath)) {
+            browser = await puppeteer.launch({
+              headless: true,
+              executablePath: chromePath,
+              args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor'
+              ]
+            });
+            browserLaunched = true;
+            break;
+          }
+        } catch (pathError) {
+          continue;
+        }
       }
-    });
 
-    await browser.close();
-    return Buffer.from(pdfBuffer);
+      if (!browserLaunched) {
+        throw new NotFoundException(
+          'Chrome browser not found. Please install Chrome or set CHROME_PATH environment variable.\n' +
+          'To install Chrome for Puppeteer, run: npx puppeteer browsers install chrome\n' +
+          'Or install Google Chrome and set CHROME_PATH to the chrome.exe path.'
+        );
+      }
+    }
+
+    try {
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px'
+        }
+      });
+
+      return Buffer.from(pdfBuffer);
+    } finally {
+      // Always close the browser, even if there's an error
+      if (browser) {
+        await browser.close().catch(console.error);
+      }
+    }
   }
 
   private getMonthName(month: number): string {
