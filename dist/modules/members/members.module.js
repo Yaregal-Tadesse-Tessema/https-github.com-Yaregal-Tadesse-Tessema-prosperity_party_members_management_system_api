@@ -11,6 +11,9 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const member_entity_1 = require("../../entities/member.entity");
 const employment_info_entity_1 = require("../../entities/employment-info.entity");
+const file_attachment_entity_1 = require("../../entities/file-attachment.entity");
+const contribution_entity_1 = require("../../entities/contribution.entity");
+const position_history_entity_1 = require("../../entities/position-history.entity");
 const members_service_1 = require("./members.service");
 const members_controller_1 = require("./members.controller");
 const audit_log_module_1 = require("../audit/audit-log.module");
@@ -21,7 +24,7 @@ exports.MembersModule = MembersModule;
 exports.MembersModule = MembersModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([member_entity_1.Member, employment_info_entity_1.EmploymentInfo]),
+            typeorm_1.TypeOrmModule.forFeature([member_entity_1.Member, employment_info_entity_1.EmploymentInfo, file_attachment_entity_1.FileAttachment, contribution_entity_1.Contribution, position_history_entity_1.PositionHistory]),
             audit_log_module_1.AuditLogModule,
             families_module_1.FamiliesModule,
         ],

@@ -104,6 +104,18 @@ export class MembersController {
     return this.membersService.update(id, updateMemberDto, req.user.id, req.user.username);
   }
 
+  @Delete(':id')
+  async delete(@Param('id') id: string, @Request() req) {
+    console.log(`[DELETE] Delete member request for ID: ${id}`, {
+      userId: req.user?.id,
+      username: req.user?.username,
+      role: req.user?.role,
+    });
+    this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+    await this.membersService.delete(id, req.user.id, req.user.username);
+    return { message: 'Member deleted successfully' };
+  }
+
   @Post(':id/employment')
   async createEmployment(
     @Param('id') id: string,

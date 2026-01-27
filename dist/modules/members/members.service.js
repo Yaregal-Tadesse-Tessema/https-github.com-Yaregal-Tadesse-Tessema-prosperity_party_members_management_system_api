@@ -18,19 +18,39 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const member_entity_1 = require("../../entities/member.entity");
 const employment_info_entity_1 = require("../../entities/employment-info.entity");
+const file_attachment_entity_1 = require("../../entities/file-attachment.entity");
+const contribution_entity_1 = require("../../entities/contribution.entity");
+const position_history_entity_1 = require("../../entities/position-history.entity");
 const audit_log_service_1 = require("../audit/audit-log.service");
 const audit_log_entity_1 = require("../../entities/audit-log.entity");
 const families_service_1 = require("../families/families.service");
+const client_s3_1 = require("@aws-sdk/client-s3");
 let MembersService = class MembersService {
     memberRepository;
     employmentRepository;
+    fileAttachmentRepository;
+    contributionRepository;
+    positionHistoryRepository;
     auditLogService;
     familiesService;
-    constructor(memberRepository, employmentRepository, auditLogService, familiesService) {
+    s3Client;
+    constructor(memberRepository, employmentRepository, fileAttachmentRepository, contributionRepository, positionHistoryRepository, auditLogService, familiesService) {
         this.memberRepository = memberRepository;
         this.employmentRepository = employmentRepository;
+        this.fileAttachmentRepository = fileAttachmentRepository;
+        this.contributionRepository = contributionRepository;
+        this.positionHistoryRepository = positionHistoryRepository;
         this.auditLogService = auditLogService;
         this.familiesService = familiesService;
+        this.s3Client = new client_s3_1.S3Client({
+            region: 'us-east-1',
+            endpoint: 'http://196.189.124.228:9000',
+            credentials: {
+                accessKeyId: 'AY1WUU308IX79DRABRGI',
+                secretAccessKey: 'neZmzgNaQpigqGext6G+HG6HM3Le7nXv3vhBNpaq',
+            },
+            forcePathStyle: true,
+        });
     }
     async create(createMemberDto, userId, username) {
         const existingMember = await this.memberRepository.findOne({
@@ -929,13 +949,129 @@ let MembersService = class MembersService {
         const buffer = await workbook.xlsx.writeBuffer();
         return buffer;
     }
+    async delete(id, userId, username) {
+        const member = await this.findOne(id);
+        const fileAttachments = await this.fileAttachmentRepository.find({
+            where: { memberId: id },
+        });
+        const bucketName = 'prosperityparty';
+        for (const attachment of fileAttachments) {
+            try {
+                let key = '';
+                if (attachment.fileType === 'profile_photo') {
+                    key = `${id}/profile/${attachment.filename}`;
+                }
+                else {
+                    const urlMatch = attachment.filePath.match(new RegExp(`${bucketName}/(.+)`));
+                    if (urlMatch && urlMatch[1]) {
+                        key = urlMatch[1];
+                    }
+                    else {
+                        if (attachment.filePath.includes('educational') || attachment.fileType === 'educational_documents') {
+                            key = `educational-documents/${attachment.filename}`;
+                        }
+                        else if (attachment.filePath.includes('experience') || attachment.fileType === 'experience_documents') {
+                            key = `experience-documents/${attachment.filename}`;
+                        }
+                        else {
+                            key = `documents/${attachment.filename}`;
+                        }
+                    }
+                }
+                let deleted = false;
+                const keysToTry = [key];
+                if (attachment.fileType === 'profile_photo') {
+                    keysToTry.push(`profile/${attachment.filename}`);
+                }
+                else if (attachment.filePath.includes('educational')) {
+                    keysToTry.push(`educational-documents/${attachment.filename}`);
+                }
+                else if (attachment.filePath.includes('experience')) {
+                    keysToTry.push(`experience-documents/${attachment.filename}`);
+                }
+                for (const tryKey of keysToTry) {
+                    try {
+                        const deleteCommand = new client_s3_1.DeleteObjectCommand({
+                            Bucket: bucketName,
+                            Key: tryKey,
+                        });
+                        await this.s3Client.send(deleteCommand);
+                        console.log(`Deleted file from MinIO: ${tryKey}`);
+                        deleted = true;
+                        break;
+                    }
+                    catch (deleteError) {
+                        if (deleteError.$metadata?.httpStatusCode === 404) {
+                            continue;
+                        }
+                        console.warn(`Failed to delete ${tryKey}:`, deleteError.message);
+                    }
+                }
+                if (!deleted) {
+                    console.warn(`Could not delete file for attachment ${attachment.id} with any of the tried paths`);
+                }
+            }
+            catch (error) {
+                console.error(`Error processing file attachment ${attachment.id}:`, error);
+            }
+        }
+        if (fileAttachments.length > 0) {
+            await this.fileAttachmentRepository.remove(fileAttachments);
+            console.log(`Deleted ${fileAttachments.length} file attachment(s) from database`);
+        }
+        const contributions = await this.contributionRepository.find({
+            where: { memberId: id },
+        });
+        if (contributions.length > 0) {
+            await this.contributionRepository.remove(contributions);
+            console.log(`Deleted ${contributions.length} contribution(s)`);
+        }
+        const positionHistory = await this.positionHistoryRepository.find({
+            where: { memberId: id },
+        });
+        if (positionHistory.length > 0) {
+            await this.positionHistoryRepository.remove(positionHistory);
+            console.log(`Deleted ${positionHistory.length} position history record(s)`);
+        }
+        const employmentInfo = await this.employmentRepository.find({
+            where: { memberId: id },
+        });
+        if (employmentInfo.length > 0) {
+            await this.employmentRepository.remove(employmentInfo);
+            console.log(`Deleted ${employmentInfo.length} employment record(s)`);
+        }
+        if (member.familyId) {
+            await this.familiesService.updateMemberCount(member.familyId);
+        }
+        await this.auditLogService.logAction({
+            userId,
+            username,
+            action: audit_log_entity_1.AuditAction.DELETE,
+            entity: audit_log_entity_1.AuditEntity.MEMBER,
+            entityId: member.id,
+            oldValues: {
+                partyId: member.partyId,
+                fullNameEnglish: member.fullNameEnglish,
+                familyId: member.familyId,
+            },
+            notes: 'Member deleted',
+        });
+        await this.memberRepository.remove(member);
+        console.log(`Member ${id} deleted successfully`);
+    }
 };
 exports.MembersService = MembersService;
 exports.MembersService = MembersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(member_entity_1.Member)),
     __param(1, (0, typeorm_1.InjectRepository)(employment_info_entity_1.EmploymentInfo)),
+    __param(2, (0, typeorm_1.InjectRepository)(file_attachment_entity_1.FileAttachment)),
+    __param(3, (0, typeorm_1.InjectRepository)(contribution_entity_1.Contribution)),
+    __param(4, (0, typeorm_1.InjectRepository)(position_history_entity_1.PositionHistory)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         audit_log_service_1.AuditLogService,
         families_service_1.FamiliesService])

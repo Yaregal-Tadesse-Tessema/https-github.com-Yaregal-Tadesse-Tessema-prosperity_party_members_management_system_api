@@ -65,6 +65,16 @@ let MembersController = class MembersController {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
         return this.membersService.update(id, updateMemberDto, req.user.id, req.user.username);
     }
+    async delete(id, req) {
+        console.log(`[DELETE] Delete member request for ID: ${id}`, {
+            userId: req.user?.id,
+            username: req.user?.username,
+            role: req.user?.role,
+        });
+        this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
+        await this.membersService.delete(id, req.user.id, req.user.username);
+        return { message: 'Member deleted successfully' };
+    }
     async createEmployment(id, employmentDto, req) {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
         if (employmentDto.monthlySalary && !this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer'])) {
@@ -236,6 +246,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], MembersController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "delete", null);
 __decorate([
     (0, common_1.Post)(':id/employment'),
     __param(0, (0, common_1.Param)('id')),

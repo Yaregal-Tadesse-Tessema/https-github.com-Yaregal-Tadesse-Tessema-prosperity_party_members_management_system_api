@@ -1,6 +1,9 @@
 import { Repository } from 'typeorm';
 import { Member, MembershipStatus, Gender, FamilyRelationship, MaritalStatus, Status } from '../../entities/member.entity';
 import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../../entities/employment-info.entity';
+import { FileAttachment } from '../../entities/file-attachment.entity';
+import { Contribution } from '../../entities/contribution.entity';
+import { PositionHistory } from '../../entities/position-history.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { FamiliesService } from '../families/families.service';
 export interface CreateMemberDto {
@@ -65,9 +68,13 @@ export interface CreateEmploymentDto {
 export declare class MembersService {
     private memberRepository;
     private employmentRepository;
+    private fileAttachmentRepository;
+    private contributionRepository;
+    private positionHistoryRepository;
     private auditLogService;
     private familiesService;
-    constructor(memberRepository: Repository<Member>, employmentRepository: Repository<EmploymentInfo>, auditLogService: AuditLogService, familiesService: FamiliesService);
+    private s3Client;
+    constructor(memberRepository: Repository<Member>, employmentRepository: Repository<EmploymentInfo>, fileAttachmentRepository: Repository<FileAttachment>, contributionRepository: Repository<Contribution>, positionHistoryRepository: Repository<PositionHistory>, auditLogService: AuditLogService, familiesService: FamiliesService);
     create(createMemberDto: CreateMemberDto, userId: string, username: string): Promise<Member>;
     findAll(page?: number, limit?: number, search?: string, membershipStatus?: MembershipStatus, status?: Status, gender?: Gender, subCity?: string, familyId?: string): Promise<{
         members: Member[];
@@ -128,4 +135,5 @@ export declare class MembersService {
     getFilteredMembers(filters: any): Promise<Member[]>;
     generateMembersPDF(members: any[]): Promise<Buffer>;
     generateMembersExcel(members: any[]): Promise<Buffer>;
+    delete(id: string, userId: string, username: string): Promise<void>;
 }

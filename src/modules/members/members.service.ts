@@ -3,9 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Member, MembershipStatus, Gender, FamilyRelationship, MaritalStatus, Status } from '../../entities/member.entity';
 import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../../entities/employment-info.entity';
+import { FileAttachment } from '../../entities/file-attachment.entity';
+import { Contribution } from '../../entities/contribution.entity';
+import { PositionHistory } from '../../entities/position-history.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuditAction, AuditEntity } from '../../entities/audit-log.entity';
 import { FamiliesService } from '../families/families.service';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -73,14 +77,33 @@ export interface CreateEmploymentDto {
 
 @Injectable()
 export class MembersService {
+  private s3Client: S3Client;
+
   constructor(
     @InjectRepository(Member)
     private memberRepository: Repository<Member>,
     @InjectRepository(EmploymentInfo)
     private employmentRepository: Repository<EmploymentInfo>,
+    @InjectRepository(FileAttachment)
+    private fileAttachmentRepository: Repository<FileAttachment>,
+    @InjectRepository(Contribution)
+    private contributionRepository: Repository<Contribution>,
+    @InjectRepository(PositionHistory)
+    private positionHistoryRepository: Repository<PositionHistory>,
     private auditLogService: AuditLogService,
     private familiesService: FamiliesService,
-  ) {}
+  ) {
+    // Initialize S3Client for MinIO
+    this.s3Client = new S3Client({
+      region: 'us-east-1',
+      endpoint: 'http://196.189.124.228:9000', // MinIO API port (9000 for API, 9001 for console)
+      credentials: {
+        accessKeyId: 'AY1WUU308IX79DRABRGI',
+        secretAccessKey: 'neZmzgNaQpigqGext6G+HG6HM3Le7nXv3vhBNpaq',
+      },
+      forcePathStyle: true, // Required for MinIO
+    });
+  }
 
   async create(createMemberDto: CreateMemberDto, userId: string, username: string): Promise<Member> {
     // Check if party ID already exists
@@ -1248,5 +1271,142 @@ export class MembersService {
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
     return buffer as Buffer;
+  }
+
+  async delete(id: string, userId: string, username: string): Promise<void> {
+    const member = await this.findOne(id);
+
+    // 1. Delete all file attachments and their files from MinIO
+    const fileAttachments = await this.fileAttachmentRepository.find({
+      where: { memberId: id },
+    });
+
+    const bucketName = 'prosperityparty';
+    for (const attachment of fileAttachments) {
+      try {
+        // Extract the MinIO key from the filePath URL
+        // filePath format: http://196.189.124.228:9000/prosperityparty/{key}
+        let key = '';
+        
+        if (attachment.fileType === 'profile_photo') {
+          // Try new path first: {memberId}/profile/{filename}
+          key = `${id}/profile/${attachment.filename}`;
+        } else {
+          // For other file types, extract from filePath URL
+          // Extract everything after the bucket name
+          const urlMatch = attachment.filePath.match(new RegExp(`${bucketName}/(.+)`));
+          if (urlMatch && urlMatch[1]) {
+            key = urlMatch[1];
+          } else {
+            // Fallback: try to construct from filename
+            // Check if it's educational or experience document
+            if (attachment.filePath.includes('educational') || attachment.fileType === 'educational_documents') {
+              key = `educational-documents/${attachment.filename}`;
+            } else if (attachment.filePath.includes('experience') || attachment.fileType === 'experience_documents') {
+              key = `experience-documents/${attachment.filename}`;
+            } else {
+              key = `documents/${attachment.filename}`;
+            }
+          }
+        }
+
+        // Try to delete with the extracted/constructed key
+        let deleted = false;
+        const keysToTry = [key];
+        
+        // Add alternative paths for backward compatibility
+        if (attachment.fileType === 'profile_photo') {
+          keysToTry.push(`profile/${attachment.filename}`);
+        } else if (attachment.filePath.includes('educational')) {
+          keysToTry.push(`educational-documents/${attachment.filename}`);
+        } else if (attachment.filePath.includes('experience')) {
+          keysToTry.push(`experience-documents/${attachment.filename}`);
+        }
+
+        for (const tryKey of keysToTry) {
+          try {
+            const deleteCommand = new DeleteObjectCommand({
+              Bucket: bucketName,
+              Key: tryKey,
+            });
+            await this.s3Client.send(deleteCommand);
+            console.log(`Deleted file from MinIO: ${tryKey}`);
+            deleted = true;
+            break;
+          } catch (deleteError: any) {
+            // If it's a 404 (file not found), that's okay - continue to next key
+            if (deleteError.$metadata?.httpStatusCode === 404) {
+              continue;
+            }
+            // For other errors, log but continue
+            console.warn(`Failed to delete ${tryKey}:`, deleteError.message);
+          }
+        }
+
+        if (!deleted) {
+          console.warn(`Could not delete file for attachment ${attachment.id} with any of the tried paths`);
+        }
+      } catch (error) {
+        console.error(`Error processing file attachment ${attachment.id}:`, error);
+        // Continue with other attachments even if one fails
+      }
+    }
+
+    // Delete file attachments from database
+    if (fileAttachments.length > 0) {
+      await this.fileAttachmentRepository.remove(fileAttachments);
+      console.log(`Deleted ${fileAttachments.length} file attachment(s) from database`);
+    }
+
+    // 2. Delete all contributions
+    const contributions = await this.contributionRepository.find({
+      where: { memberId: id },
+    });
+    if (contributions.length > 0) {
+      await this.contributionRepository.remove(contributions);
+      console.log(`Deleted ${contributions.length} contribution(s)`);
+    }
+
+    // 3. Delete all position history
+    const positionHistory = await this.positionHistoryRepository.find({
+      where: { memberId: id },
+    });
+    if (positionHistory.length > 0) {
+      await this.positionHistoryRepository.remove(positionHistory);
+      console.log(`Deleted ${positionHistory.length} position history record(s)`);
+    }
+
+    // 4. EmploymentInfo should be deleted via CASCADE, but let's ensure it's deleted
+    const employmentInfo = await this.employmentRepository.find({
+      where: { memberId: id },
+    });
+    if (employmentInfo.length > 0) {
+      await this.employmentRepository.remove(employmentInfo);
+      console.log(`Deleted ${employmentInfo.length} employment record(s)`);
+    }
+
+    // 5. Update family member count if member is part of a family
+    if (member.familyId) {
+      await this.familiesService.updateMemberCount(member.familyId);
+    }
+
+    // 6. Log the deletion before actually deleting
+    await this.auditLogService.logAction({
+      userId,
+      username,
+      action: AuditAction.DELETE,
+      entity: AuditEntity.MEMBER,
+      entityId: member.id,
+      oldValues: {
+        partyId: member.partyId,
+        fullNameEnglish: member.fullNameEnglish,
+        familyId: member.familyId,
+      },
+      notes: 'Member deleted',
+    });
+
+    // 7. Delete the member
+    await this.memberRepository.remove(member);
+    console.log(`Member ${id} deleted successfully`);
   }
 }
