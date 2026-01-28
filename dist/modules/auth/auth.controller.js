@@ -16,6 +16,8 @@ exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const jwt_auth_guard_1 = require("./jwt-auth.guard");
+const update_user_dto_1 = require("./dto/update-user.dto");
+const user_entity_1 = require("../../entities/user.entity");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -29,6 +31,26 @@ let AuthController = class AuthController {
     }
     async getProfile(req) {
         return this.authService.getProfile(req.user.id);
+    }
+    async findAllUsers(search, role, isActive, includePassword) {
+        const query = {};
+        if (search)
+            query.search = search;
+        if (role)
+            query.role = role;
+        if (isActive !== undefined && isActive !== '') {
+            query.isActive = isActive === 'true';
+        }
+        return this.authService.findAll(query, includePassword === 'true');
+    }
+    async findOneUser(id, includePassword) {
+        return this.authService.findOne(id, includePassword === 'true');
+    }
+    async updateUser(id, updateUserDto) {
+        return this.authService.update(id, updateUserDto);
+    }
+    async removeUser(id, req) {
+        await this.authService.remove(id, req.user.id);
     }
 };
 exports.AuthController = AuthController;
@@ -54,6 +76,44 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('users'),
+    __param(0, (0, common_1.Query)('search')),
+    __param(1, (0, common_1.Query)('role')),
+    __param(2, (0, common_1.Query)('isActive')),
+    __param(3, (0, common_1.Query)('includePassword')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "findAllUsers", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('users/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)('includePassword')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "findOneUser", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Patch)('users/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_user_dto_1.UpdateUserDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "updateUser", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Delete)('users/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "removeUser", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

@@ -31,10 +31,13 @@ let AuthService = class AuthService {
     }
     async validateUser(phone, password) {
         const user = await this.userRepository.findOne({
-            where: { phone, isActive: true },
+            where: { phone },
         });
         if (!user) {
             return null;
+        }
+        if (!user.isActive) {
+            throw new common_1.ForbiddenException('User is not active');
         }
         if (password !== user.password) {
             return null;
@@ -65,11 +68,19 @@ let AuthService = class AuthService {
         };
     }
     async register(registerDto) {
-        const existingUser = await this.userRepository.findOne({
+        const existingByUsername = await this.userRepository.findOne({
             where: { username: registerDto.username },
         });
-        if (existingUser) {
+        if (existingByUsername) {
             throw new common_1.ConflictException('Username already exists');
+        }
+        if (registerDto.phone) {
+            const existingByPhone = await this.userRepository.findOne({
+                where: { phone: registerDto.phone },
+            });
+            if (existingByPhone) {
+                throw new common_1.ConflictException('User already exists');
+            }
         }
         const user = this.userRepository.create({
             username: registerDto.username,
@@ -105,6 +116,98 @@ let AuthService = class AuthService {
         }
         const { password: _, ...result } = user;
         return result;
+    }
+    async findAll(query, includePassword = false) {
+        const where = {};
+        if (query?.role != null) {
+            where.role = query.role;
+        }
+        if (query?.isActive !== undefined) {
+            where.isActive = query.isActive;
+        }
+        if (query?.search?.trim()) {
+            const search = `%${query.search.trim()}%`;
+            const users = await this.userRepository.find({
+                where: [
+                    { ...where, username: (0, typeorm_2.Like)(search) },
+                    { ...where, fullName: (0, typeorm_2.Like)(search) },
+                ],
+                order: { createdAt: 'DESC' },
+            });
+            const seen = new Set();
+            const deduped = users.filter((u) => {
+                if (seen.has(u.id))
+                    return false;
+                seen.add(u.id);
+                return true;
+            });
+            return deduped.map((u) => this.toUserResponse(u, includePassword));
+        }
+        const users = await this.userRepository.find({
+            where,
+            order: { createdAt: 'DESC' },
+        });
+        return users.map((u) => this.toUserResponse(u, includePassword));
+    }
+    toUserResponse(u, includePassword) {
+        const base = {
+            id: u.id,
+            username: u.username,
+            fullName: u.fullName,
+            role: u.role,
+            isActive: u.isActive,
+            phone: u.phone,
+            email: u.email,
+            createdAt: u.createdAt,
+            updatedAt: u.updatedAt,
+            lastLoginAt: u.lastLoginAt,
+        };
+        if (includePassword) {
+            return { ...base, password: u.password };
+        }
+        return base;
+    }
+    async findOne(id, includePassword = false) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        if (includePassword) {
+            return user;
+        }
+        const { password: _, ...result } = user;
+        return result;
+    }
+    async update(id, dto) {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        if (dto.fullName !== undefined)
+            user.fullName = dto.fullName;
+        if (dto.role !== undefined)
+            user.role = dto.role;
+        if (dto.phone !== undefined)
+            user.phone = dto.phone;
+        if (dto.email !== undefined)
+            user.email = dto.email;
+        if (dto.isActive !== undefined)
+            user.isActive = dto.isActive;
+        if (dto.password !== undefined && dto.password !== '')
+            user.password = dto.password;
+        const saved = await this.userRepository.save(user);
+        const { password: _, ...result } = saved;
+        return result;
+    }
+    async remove(id, currentUserId) {
+        if (id === currentUserId) {
+            throw new common_1.ForbiddenException('You cannot delete your own account');
+        }
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        await this.userRepository.update(id, { isActive: false });
     }
     async createDefaultAdmin() {
         const adminExists = await this.userRepository.findOne({
