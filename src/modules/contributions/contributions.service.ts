@@ -122,7 +122,7 @@ export class ContributionsService {
 
     if (search) {
       query.andWhere(
-        '(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR member.partyId ILIKE :search)',
+        '(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR CAST(member.partyId AS TEXT) ILIKE :search)',
         { search: `%${search}%` }
       );
     }

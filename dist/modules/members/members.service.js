@@ -121,22 +121,19 @@ let MembersService = class MembersService {
             .leftJoinAndSelect('member.positionHistory', 'positions')
             .leftJoinAndSelect('member.contributions', 'contributions');
         if (search) {
-            query.andWhere('(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR member.partyId ILIKE :search)', { search: `%${search}%` });
+            query.andWhere('(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR CAST(member.partyId AS TEXT) ILIKE :search)', { search: `%${search}%` });
         }
         if (membershipStatus) {
             const normalizedMembershipStatus = typeof membershipStatus === 'string' ? membershipStatus.toLowerCase().trim() : membershipStatus;
             query.andWhere('member.membershipStatus = :membershipStatus', { membershipStatus: normalizedMembershipStatus });
-            console.log('Filtering by membershipStatus:', normalizedMembershipStatus);
         }
         if (status) {
             const normalizedStatus = typeof status === 'string' ? status.toLowerCase().trim() : status;
             query.andWhere('member.status = :status', { status: normalizedStatus });
-            console.log('Filtering by status:', normalizedStatus);
         }
         if (gender) {
             const normalizedGender = typeof gender === 'string' ? gender.toLowerCase().trim() : gender;
             query.andWhere('member.gender = :gender', { gender: normalizedGender });
-            console.log('Filtering by gender:', normalizedGender, 'Type:', typeof gender, 'Original:', gender);
         }
         if (subCity) {
             query.andWhere('member.subCity = :subCity', { subCity });
@@ -144,22 +141,11 @@ let MembersService = class MembersService {
         if (familyId) {
             query.andWhere('member.familyId = :familyId', { familyId });
         }
-        query.orderBy('member.createdAt', 'DESC');
-        const sql = query.getQuery();
-        const params = query.getParameters();
-        console.log('Members query - SQL:', sql);
-        console.log('Members query - Parameters:', JSON.stringify(params));
-        console.log('Members query - Gender filter:', gender);
+        query.orderBy('member.partyId', 'ASC');
         const [members, total] = await query
             .skip((page - 1) * limit)
             .take(limit)
             .getManyAndCount();
-        console.log('Members query - Results:', {
-            membersCount: members.length,
-            total,
-            genderFilter: gender,
-            sampleGenders: members.slice(0, 3).map(m => m.gender)
-        });
         return { members, total, page, limit };
     }
     async findOne(id) {
@@ -179,6 +165,14 @@ let MembersService = class MembersService {
     }
     async update(id, updateMemberDto, userId, username) {
         const member = await this.findOne(id);
+        if (updateMemberDto.partyId !== undefined && updateMemberDto.partyId !== member.partyId) {
+            const existingMember = await this.memberRepository.findOne({
+                where: { partyId: updateMemberDto.partyId },
+            });
+            if (existingMember) {
+                throw new common_1.ConflictException('Party ID already exists');
+            }
+        }
         const oldValues = {
             fullNameEnglish: member.fullNameEnglish,
             primaryPhone: member.primaryPhone,
@@ -795,7 +789,7 @@ let MembersService = class MembersService {
             });
         }
         if (filters.searchQuery && filters.searchQuery.trim() !== '') {
-            queryBuilder.andWhere('(member.fullNameEnglish LIKE :search OR member.fullNameAmharic LIKE :search OR member.partyId LIKE :search OR member.primaryPhone LIKE :search)', { search: `%${filters.searchQuery}%` });
+            queryBuilder.andWhere('(member.fullNameEnglish LIKE :search OR member.fullNameAmharic LIKE :search OR CAST(member.partyId AS TEXT) LIKE :search OR member.primaryPhone LIKE :search)', { search: `%${filters.searchQuery}%` });
         }
         queryBuilder.orderBy('member.createdAt', 'DESC');
         return await queryBuilder.getMany();

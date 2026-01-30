@@ -14,7 +14,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export interface CreateMemberDto {
-  partyId: string;
+  partyId: number;
   nationalId?: string;
   fullNameAmharic: string;
   fullNameEnglish: string;
@@ -41,6 +41,7 @@ export interface CreateMemberDto {
 }
 
 export interface UpdateMemberDto {
+  partyId?: number;
   nationalId?: string;
   fullNameAmharic?: string;
   fullNameEnglish?: string;
@@ -208,31 +209,24 @@ export class MembersService {
 
     if (search) {
       query.andWhere(
-        '(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR member.partyId ILIKE :search)',
+        '(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR CAST(member.partyId AS TEXT) ILIKE :search)',
         { search: `%${search}%` }
       );
     }
 
     if (membershipStatus) {
-      // Filter by membership status (Supportive Member, Candidate Member, Full Member)
       const normalizedMembershipStatus = typeof membershipStatus === 'string' ? membershipStatus.toLowerCase().trim() : membershipStatus;
       query.andWhere('member.membershipStatus = :membershipStatus', { membershipStatus: normalizedMembershipStatus });
-      console.log('Filtering by membershipStatus:', normalizedMembershipStatus);
     }
 
     if (status) {
-      // Filter by activity status (active, inactive, suspended)
       const normalizedStatus = typeof status === 'string' ? status.toLowerCase().trim() : status;
       query.andWhere('member.status = :status', { status: normalizedStatus });
-      console.log('Filtering by status:', normalizedStatus);
     }
 
     if (gender) {
-      // Handle both enum values and string values, normalize to lowercase
-      // Gender enum values are 'male' and 'female' (lowercase)
       const normalizedGender = typeof gender === 'string' ? gender.toLowerCase().trim() : gender;
       query.andWhere('member.gender = :gender', { gender: normalizedGender });
-      console.log('Filtering by gender:', normalizedGender, 'Type:', typeof gender, 'Original:', gender);
     }
 
     if (subCity) {
@@ -243,26 +237,12 @@ export class MembersService {
       query.andWhere('member.familyId = :familyId', { familyId });
     }
 
-    query.orderBy('member.createdAt', 'DESC');
-
-    // Log the generated SQL query for debugging
-    const sql = query.getQuery();
-    const params = query.getParameters();
-    console.log('Members query - SQL:', sql);
-    console.log('Members query - Parameters:', JSON.stringify(params));
-    console.log('Members query - Gender filter:', gender);
+    query.orderBy('member.partyId', 'ASC');
 
     const [members, total] = await query
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
-
-    console.log('Members query - Results:', { 
-      membersCount: members.length, 
-      total, 
-      genderFilter: gender,
-      sampleGenders: members.slice(0, 3).map(m => m.gender)
-    });
 
     return { members, total, page, limit };
   }
@@ -287,6 +267,16 @@ export class MembersService {
 
   async update(id: string, updateMemberDto: UpdateMemberDto, userId: string, username: string): Promise<Member> {
     const member = await this.findOne(id);
+
+    // If partyId is being changed, ensure it does not already exist on another member
+    if (updateMemberDto.partyId !== undefined && updateMemberDto.partyId !== member.partyId) {
+      const existingMember = await this.memberRepository.findOne({
+        where: { partyId: updateMemberDto.partyId },
+      });
+      if (existingMember) {
+        throw new ConflictException('Party ID already exists');
+      }
+    }
 
     // Get old values for audit log
     const oldValues = {
@@ -1093,7 +1083,7 @@ export class MembersService {
 
     if (filters.searchQuery && filters.searchQuery.trim() !== '') {
       queryBuilder.andWhere(
-        '(member.fullNameEnglish LIKE :search OR member.fullNameAmharic LIKE :search OR member.partyId LIKE :search OR member.primaryPhone LIKE :search)',
+        '(member.fullNameEnglish LIKE :search OR member.fullNameAmharic LIKE :search OR CAST(member.partyId AS TEXT) LIKE :search OR member.primaryPhone LIKE :search)',
         { search: `%${filters.searchQuery}%` }
       );
     }

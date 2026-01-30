@@ -70,7 +70,14 @@ let HubretsService = class HubretsService {
     async findOne(id) {
         const hubret = await this.hubretRepository.findOne({
             where: { id },
-            relations: ['families', 'families.members'],
+            relations: [
+                'families',
+                'families.members',
+                'leader',
+                'deputyPoliticalSectorHead',
+                'deputyOrganizationSectorHead',
+                'deputyFinanceSectorHead',
+            ],
         });
         if (!hubret) {
             throw new common_1.NotFoundException('Hubret not found');

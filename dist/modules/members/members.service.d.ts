@@ -7,7 +7,7 @@ import { PositionHistory } from '../../entities/position-history.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { FamiliesService } from '../families/families.service';
 export interface CreateMemberDto {
-    partyId: string;
+    partyId: number;
     nationalId?: string;
     fullNameAmharic: string;
     fullNameEnglish: string;
@@ -33,6 +33,7 @@ export interface CreateMemberDto {
     status?: Status;
 }
 export interface UpdateMemberDto {
+    partyId?: number;
     nationalId?: string;
     fullNameAmharic?: string;
     fullNameEnglish?: string;

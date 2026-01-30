@@ -53,7 +53,7 @@ export declare enum MaritalStatus {
 }
 export declare class Member {
     id: string;
-    partyId: string;
+    partyId: number;
     nationalId?: string;
     fullNameAmharic: string;
     fullNameEnglish: string;

@@ -126,8 +126,8 @@ __decorate([
     __metadata("design:type", String)
 ], Member.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ unique: true }),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ type: 'int', unique: true }),
+    __metadata("design:type", Number)
 ], Member.prototype, "partyId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true, unique: true }),

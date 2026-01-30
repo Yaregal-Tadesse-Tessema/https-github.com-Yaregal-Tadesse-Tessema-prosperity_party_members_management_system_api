@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { Family } from './family.entity';
+import { Member } from './member.entity';
 
 export enum HubretStatus {
   ACTIVE = 'active',
@@ -30,6 +31,32 @@ export class Hubret {
   // Hubret Leader Information
   @Column({ nullable: true })
   leaderMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'leaderMemberId' })
+  leader?: Member;
+
+  // Deputy Sector Heads (Member relations)
+  @Column({ nullable: true })
+  deputyPoliticalSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'deputyPoliticalSectorHeadMemberId' })
+  deputyPoliticalSectorHead?: Member;
+
+  @Column({ nullable: true })
+  deputyOrganizationSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'deputyOrganizationSectorHeadMemberId' })
+  deputyOrganizationSectorHead?: Member;
+
+  @Column({ nullable: true })
+  deputyFinanceSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'deputyFinanceSectorHeadMemberId' })
+  deputyFinanceSectorHead?: Member;
 
   // Contact Information
   @Column({ nullable: true })

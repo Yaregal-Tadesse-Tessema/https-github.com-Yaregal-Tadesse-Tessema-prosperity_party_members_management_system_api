@@ -10,6 +10,9 @@ export interface CreateHubretDto {
   hubretNameAmharic: string;
   hubretNameEnglish: string;
   leaderMemberId?: string;
+  deputyPoliticalSectorHeadMemberId?: string;
+  deputyOrganizationSectorHeadMemberId?: string;
+  deputyFinanceSectorHeadMemberId?: string;
   contactPerson?: string;
   phone?: string;
   email?: string;
@@ -25,6 +28,9 @@ export interface UpdateHubretDto {
   hubretNameEnglish?: string;
   status?: HubretStatus;
   leaderMemberId?: string;
+  deputyPoliticalSectorHeadMemberId?: string;
+  deputyOrganizationSectorHeadMemberId?: string;
+  deputyFinanceSectorHeadMemberId?: string;
   contactPerson?: string;
   phone?: string;
   email?: string;
@@ -97,7 +103,14 @@ export class HubretsService {
   async findOne(id: string): Promise<Hubret> {
     const hubret = await this.hubretRepository.findOne({
       where: { id },
-      relations: ['families', 'families.members'],
+      relations: [
+        'families',
+        'families.members',
+        'leader',
+        'deputyPoliticalSectorHead',
+        'deputyOrganizationSectorHead',
+        'deputyFinanceSectorHead',
+      ],
     });
 
     if (!hubret) {

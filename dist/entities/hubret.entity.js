@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Hubret = exports.HubretStatus = void 0;
 const typeorm_1 = require("typeorm");
 const family_entity_1 = require("./family.entity");
+const member_entity_1 = require("./member.entity");
 var HubretStatus;
 (function (HubretStatus) {
     HubretStatus["ACTIVE"] = "active";
@@ -25,6 +26,13 @@ let Hubret = class Hubret {
     hubretNameEnglish;
     status;
     leaderMemberId;
+    leader;
+    deputyPoliticalSectorHeadMemberId;
+    deputyPoliticalSectorHead;
+    deputyOrganizationSectorHeadMemberId;
+    deputyOrganizationSectorHead;
+    deputyFinanceSectorHeadMemberId;
+    deputyFinanceSectorHead;
     contactPerson;
     phone;
     email;
@@ -70,6 +78,38 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Hubret.prototype, "leaderMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'leaderMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "leader", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "deputyPoliticalSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'deputyPoliticalSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "deputyPoliticalSectorHead", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "deputyOrganizationSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'deputyOrganizationSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "deputyOrganizationSectorHead", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "deputyFinanceSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'deputyFinanceSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "deputyFinanceSectorHead", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

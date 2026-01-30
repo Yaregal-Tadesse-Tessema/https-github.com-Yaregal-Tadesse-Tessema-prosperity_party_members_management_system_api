@@ -67,8 +67,8 @@ export class Member {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  partyId: string;
+  @Column({ type: 'int', unique: true })
+  partyId: number;
 
   @Column({ nullable: true, unique: true })
   nationalId?: string;

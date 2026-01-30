@@ -85,7 +85,7 @@ export class SeederService {
       const phoneNumber = this.generateEthiopianPhone();
 
       const member = new Member();
-      member.partyId = `P${String(i + 1).padStart(4, '0')}`;
+      member.partyId = i + 1;
       member.nationalId = this.generateNationalId();
       member.fullNameAmharic = fullNameAmharic;
       member.fullNameEnglish = fullNameEnglish;

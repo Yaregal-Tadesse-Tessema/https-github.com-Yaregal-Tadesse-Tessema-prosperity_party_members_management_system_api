@@ -92,7 +92,7 @@ let ContributionsService = class ContributionsService {
             .addOrderBy('contribution.paymentMonth', 'DESC')
             .addOrderBy('contribution.createdAt', 'DESC');
         if (search) {
-            query.andWhere('(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR member.partyId ILIKE :search)', { search: `%${search}%` });
+            query.andWhere('(member.fullNameEnglish ILIKE :search OR member.fullNameAmharic ILIKE :search OR CAST(member.partyId AS TEXT) ILIKE :search)', { search: `%${search}%` });
         }
         if (status) {
             query.andWhere('contribution.paymentStatus = :status', { status });
