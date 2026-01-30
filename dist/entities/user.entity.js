@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = exports.UserRole = void 0;
 const typeorm_1 = require("typeorm");
 const class_transformer_1 = require("class-transformer");
+const member_entity_1 = require("./member.entity");
 var UserRole;
 (function (UserRole) {
     UserRole["SYSTEM_ADMIN"] = "system_admin";
@@ -19,6 +20,7 @@ var UserRole;
     UserRole["FINANCE_OFFICER"] = "finance_officer";
     UserRole["DATA_ENTRY_OFFICER"] = "data_entry_officer";
     UserRole["READ_ONLY_VIEWER"] = "read_only_viewer";
+    UserRole["MEMBER"] = "member";
 })(UserRole || (exports.UserRole = UserRole = {}));
 let User = class User {
     id;
@@ -32,6 +34,8 @@ let User = class User {
     createdAt;
     updatedAt;
     lastLoginAt;
+    memberId;
+    member;
 };
 exports.User = User;
 __decorate([
@@ -82,6 +86,15 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)
 ], User.prototype, "lastLoginAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "memberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true, onDelete: 'SET NULL' }),
+    (0, typeorm_1.JoinColumn)({ name: 'memberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], User.prototype, "member", void 0);
 exports.User = User = __decorate([
     (0, typeorm_1.Entity)('users')
 ], User);

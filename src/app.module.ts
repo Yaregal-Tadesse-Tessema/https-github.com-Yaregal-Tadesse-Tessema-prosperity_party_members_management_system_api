@@ -13,6 +13,10 @@ import { FileAttachment } from './entities/file-attachment.entity';
 import { AuditLog } from './entities/audit-log.entity';
 import { Family } from './entities/family.entity';
 import { Hubret } from './entities/hubret.entity';
+import { Commission } from './entities/commission.entity';
+import { News } from './entities/news.entity';
+import { PolicyDocument } from './entities/policy-document.entity';
+import { Event } from './entities/event.entity';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuditLogModule } from './modules/audit/audit-log.module';
 import { MembersModule } from './modules/members/members.module';
@@ -22,6 +26,9 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { FilesModule } from './modules/files/files.module';
 import { FamiliesModule } from './modules/families/families.module';
 import { HubretsModule } from './modules/hubrets/hubrets.module';
+import { NewsModule } from './modules/news/news.module';
+import { PoliciesModule } from './modules/policies/policies.module';
+import { EventsModule } from './modules/events/events.module';
 import { SeederModule } from './seeder/seeder.module';
 
 @Module({
@@ -48,6 +55,10 @@ import { SeederModule } from './seeder/seeder.module';
         AuditLog,
         Family,
         Hubret,
+        Commission,
+        News,
+        PolicyDocument,
+        Event,
       ],
       synchronize: process.env.NODE_ENV !== 'production',
       logging: process.env.NODE_ENV === 'development',
@@ -61,6 +72,9 @@ import { SeederModule } from './seeder/seeder.module';
     FilesModule,
     FamiliesModule,
     HubretsModule,
+    NewsModule,
+    PoliciesModule,
+    EventsModule,
     SeederModule,
   ],
   controllers: [AppController],

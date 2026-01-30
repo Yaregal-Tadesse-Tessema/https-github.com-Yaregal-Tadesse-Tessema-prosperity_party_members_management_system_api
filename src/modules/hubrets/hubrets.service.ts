@@ -3,8 +3,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Hubret, HubretStatus } from '../../entities/hubret.entity';
 import { Family } from '../../entities/family.entity';
+import { Commission } from '../../entities/commission.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuditAction, AuditEntity } from '../../entities/audit-log.entity';
+
+export interface CommissionDto {
+  member1Id?: string;
+  member2Id?: string;
+  member3Id?: string;
+  member4Id?: string;
+  member5Id?: string;
+  notes?: string;
+}
 
 export interface CreateHubretDto {
   hubretNameAmharic: string;
@@ -48,6 +58,8 @@ export class HubretsService {
     private hubretRepository: Repository<Hubret>,
     @InjectRepository(Family)
     private familyRepository: Repository<Family>,
+    @InjectRepository(Commission)
+    private commissionRepository: Repository<Commission>,
     private auditLogService: AuditLogService,
   ) {}
 
@@ -164,6 +176,33 @@ export class HubretsService {
     });
 
     return savedHubret;
+  }
+
+  async getCommission(hubretId: string): Promise<Commission | null> {
+    await this.findOne(hubretId); // ensure hubret exists
+    const commission = await this.commissionRepository.findOne({
+      where: { hubretId },
+      relations: ['member1', 'member2', 'member3', 'member4', 'member5'],
+    });
+    return commission ?? null;
+  }
+
+  async upsertCommission(hubretId: string, dto: CommissionDto, userId: string): Promise<Commission> {
+    await this.findOne(hubretId); // ensure hubret exists
+    const uuidFields = ['member1Id', 'member2Id', 'member3Id', 'member4Id', 'member5Id'];
+    const sanitized: CommissionDto = { ...dto };
+    uuidFields.forEach((field) => {
+      if ((sanitized as any)[field] === '') {
+        (sanitized as any)[field] = null;
+      }
+    });
+
+    let commission = await this.commissionRepository.findOne({ where: { hubretId } });
+    if (!commission) {
+      commission = this.commissionRepository.create({ hubretId });
+    }
+    Object.assign(commission, sanitized);
+    return this.commissionRepository.save(commission);
   }
 
   async remove(id: string, userId: string): Promise<void> {

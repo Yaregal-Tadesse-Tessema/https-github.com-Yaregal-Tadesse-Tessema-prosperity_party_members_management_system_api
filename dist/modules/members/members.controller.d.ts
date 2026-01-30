@@ -24,6 +24,7 @@ export declare class MembersController {
         candidateMaleMembers: number;
         candidateFemaleMembers: number;
     }>;
+    getMe(req: any): Promise<import("../../entities/member.entity").Member>;
     findOne(id: string, req: any): Promise<import("../../entities/member.entity").Member>;
     update(id: string, updateMemberDto: UpdateMemberDto, req: any): Promise<import("../../entities/member.entity").Member>;
     delete(id: string, req: any): Promise<{
@@ -72,4 +73,5 @@ export declare class MembersController {
     exportMembersExcel(filters: any, req: any, res: ExpressResponse): Promise<void>;
     private checkPermission;
     private hasRole;
+    private rejectMemberRole;
 }

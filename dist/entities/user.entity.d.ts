@@ -1,9 +1,11 @@
+import { Member } from './member.entity';
 export declare enum UserRole {
     SYSTEM_ADMIN = "system_admin",
     PARTY_ADMIN = "party_admin",
     FINANCE_OFFICER = "finance_officer",
     DATA_ENTRY_OFFICER = "data_entry_officer",
-    READ_ONLY_VIEWER = "read_only_viewer"
+    READ_ONLY_VIEWER = "read_only_viewer",
+    MEMBER = "member"
 }
 export declare class User {
     id: string;
@@ -17,4 +19,6 @@ export declare class User {
     createdAt: Date;
     updatedAt: Date;
     lastLoginAt?: Date;
+    memberId?: string;
+    member?: Member;
 }

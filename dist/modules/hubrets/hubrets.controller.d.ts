@@ -1,4 +1,4 @@
-import { HubretsService, CreateHubretDto, UpdateHubretDto } from './hubrets.service';
+import { HubretsService, CreateHubretDto, UpdateHubretDto, CommissionDto } from './hubrets.service';
 export declare class HubretsController {
     private readonly hubretsService;
     constructor(hubretsService: HubretsService);
@@ -10,6 +10,8 @@ export declare class HubretsController {
         totalFamilies: number;
         totalMembers: number;
     }>;
+    getCommission(id: string): Promise<import("../../entities/commission.entity").Commission | null>;
+    upsertCommission(id: string, dto: CommissionDto, req: any): Promise<import("../../entities/commission.entity").Commission>;
     findOne(id: string): Promise<import("../../entities/hubret.entity").Hubret>;
     update(id: string, updateHubretDto: UpdateHubretDto, req: any): Promise<import("../../entities/hubret.entity").Hubret>;
     remove(id: string, req: any): Promise<void>;

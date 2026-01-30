@@ -1,7 +1,16 @@
 import { Repository } from 'typeorm';
 import { Hubret, HubretStatus } from '../../entities/hubret.entity';
 import { Family } from '../../entities/family.entity';
+import { Commission } from '../../entities/commission.entity';
 import { AuditLogService } from '../audit/audit-log.service';
+export interface CommissionDto {
+    member1Id?: string;
+    member2Id?: string;
+    member3Id?: string;
+    member4Id?: string;
+    member5Id?: string;
+    notes?: string;
+}
 export interface CreateHubretDto {
     hubretNameAmharic: string;
     hubretNameEnglish: string;
@@ -38,12 +47,15 @@ export interface UpdateHubretDto {
 export declare class HubretsService {
     private hubretRepository;
     private familyRepository;
+    private commissionRepository;
     private auditLogService;
-    constructor(hubretRepository: Repository<Hubret>, familyRepository: Repository<Family>, auditLogService: AuditLogService);
+    constructor(hubretRepository: Repository<Hubret>, familyRepository: Repository<Family>, commissionRepository: Repository<Commission>, auditLogService: AuditLogService);
     create(createHubretDto: CreateHubretDto, userId: string): Promise<Hubret>;
     findAll(): Promise<Hubret[]>;
     findOne(id: string): Promise<Hubret>;
     update(id: string, updateHubretDto: UpdateHubretDto, userId: string): Promise<Hubret>;
+    getCommission(hubretId: string): Promise<Commission | null>;
+    upsertCommission(hubretId: string, dto: CommissionDto, userId: string): Promise<Commission>;
     remove(id: string, userId: string): Promise<void>;
     getStats(): Promise<{
         totalHubrets: number;

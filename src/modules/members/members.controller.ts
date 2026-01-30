@@ -46,6 +46,7 @@ export class MembersController {
     @Query('subCity') subCity?: string,
     @Query('familyId') familyId?: string,
   ) {
+    this.rejectMemberRole(req.user);
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
 
@@ -78,8 +79,22 @@ export class MembersController {
     return this.membersService.getMemberStats();
   }
 
+  @Get('me')
+  async getMe(@Request() req) {
+    const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
+    const member = await this.membersService.findMe(req.user.id);
+    if (!canViewSalary && member.employmentHistory) {
+      member.employmentHistory = member.employmentHistory.map((emp: any) => {
+        const { monthlySalary, ...rest } = emp;
+        return rest;
+      });
+    }
+    return member;
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req) {
+    this.rejectMemberRole(req.user);
     const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
     const member = await this.membersService.findOne(id);
 
@@ -334,5 +349,11 @@ export class MembersController {
 
   private hasRole(user: any, roles: string[]): boolean {
     return roles.includes(user.role);
+  }
+
+  private rejectMemberRole(user: any): void {
+    if (user?.role === 'member') {
+      throw new ForbiddenException('Members can only access their own profile via My profile');
+    }
   }
 }

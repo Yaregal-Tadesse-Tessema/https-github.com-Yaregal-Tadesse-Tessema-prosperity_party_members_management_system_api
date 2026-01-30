@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const member_entity_1 = require("../../entities/member.entity");
+const user_entity_1 = require("../../entities/user.entity");
 const employment_info_entity_1 = require("../../entities/employment-info.entity");
 const file_attachment_entity_1 = require("../../entities/file-attachment.entity");
 const contribution_entity_1 = require("../../entities/contribution.entity");
@@ -27,6 +28,7 @@ const families_service_1 = require("../families/families.service");
 const client_s3_1 = require("@aws-sdk/client-s3");
 let MembersService = class MembersService {
     memberRepository;
+    userRepository;
     employmentRepository;
     fileAttachmentRepository;
     contributionRepository;
@@ -34,8 +36,9 @@ let MembersService = class MembersService {
     auditLogService;
     familiesService;
     s3Client;
-    constructor(memberRepository, employmentRepository, fileAttachmentRepository, contributionRepository, positionHistoryRepository, auditLogService, familiesService) {
+    constructor(memberRepository, userRepository, employmentRepository, fileAttachmentRepository, contributionRepository, positionHistoryRepository, auditLogService, familiesService) {
         this.memberRepository = memberRepository;
+        this.userRepository = userRepository;
         this.employmentRepository = employmentRepository;
         this.fileAttachmentRepository = fileAttachmentRepository;
         this.contributionRepository = contributionRepository;
@@ -162,6 +165,16 @@ let MembersService = class MembersService {
             throw new common_1.NotFoundException('Member not found');
         }
         return member;
+    }
+    async findMe(userId) {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            select: ['id', 'memberId'],
+        });
+        if (!user?.memberId) {
+            throw new common_1.ForbiddenException('No member profile linked to this account');
+        }
+        return this.findOne(user.memberId);
     }
     async update(id, updateMemberDto, userId, username) {
         const member = await this.findOne(id);
@@ -1058,11 +1071,13 @@ exports.MembersService = MembersService;
 exports.MembersService = MembersService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(member_entity_1.Member)),
-    __param(1, (0, typeorm_1.InjectRepository)(employment_info_entity_1.EmploymentInfo)),
-    __param(2, (0, typeorm_1.InjectRepository)(file_attachment_entity_1.FileAttachment)),
-    __param(3, (0, typeorm_1.InjectRepository)(contribution_entity_1.Contribution)),
-    __param(4, (0, typeorm_1.InjectRepository)(position_history_entity_1.PositionHistory)),
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(2, (0, typeorm_1.InjectRepository)(employment_info_entity_1.EmploymentInfo)),
+    __param(3, (0, typeorm_1.InjectRepository)(file_attachment_entity_1.FileAttachment)),
+    __param(4, (0, typeorm_1.InjectRepository)(contribution_entity_1.Contribution)),
+    __param(5, (0, typeorm_1.InjectRepository)(position_history_entity_1.PositionHistory)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

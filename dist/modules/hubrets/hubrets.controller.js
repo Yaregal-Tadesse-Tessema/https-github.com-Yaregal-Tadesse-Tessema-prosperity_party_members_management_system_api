@@ -30,6 +30,12 @@ let HubretsController = class HubretsController {
     getStats() {
         return this.hubretsService.getStats();
     }
+    getCommission(id) {
+        return this.hubretsService.getCommission(id);
+    }
+    upsertCommission(id, dto, req) {
+        return this.hubretsService.upsertCommission(id, dto, req.user.id);
+    }
     findOne(id) {
         return this.hubretsService.findOne(id);
     }
@@ -70,6 +76,22 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], HubretsController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Get)(':id/commission'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], HubretsController.prototype, "getCommission", null);
+__decorate([
+    (0, common_1.Put)(':id/commission'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], HubretsController.prototype, "upsertCommission", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

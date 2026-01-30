@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Member } from './member.entity';
 
 export enum UserRole {
   SYSTEM_ADMIN = 'system_admin',
@@ -7,6 +8,7 @@ export enum UserRole {
   FINANCE_OFFICER = 'finance_officer',
   DATA_ENTRY_OFFICER = 'data_entry_officer',
   READ_ONLY_VIEWER = 'read_only_viewer',
+  MEMBER = 'member',
 }
 
 @Entity('users')
@@ -47,4 +49,11 @@ export class User {
 
   @Column({ nullable: true })
   lastLoginAt?: Date;
+
+  @Column({ nullable: true })
+  memberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'memberId' })
+  member?: Member;
 }

@@ -18,15 +18,18 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const hubret_entity_1 = require("../../entities/hubret.entity");
 const family_entity_1 = require("../../entities/family.entity");
+const commission_entity_1 = require("../../entities/commission.entity");
 const audit_log_service_1 = require("../audit/audit-log.service");
 const audit_log_entity_1 = require("../../entities/audit-log.entity");
 let HubretsService = class HubretsService {
     hubretRepository;
     familyRepository;
+    commissionRepository;
     auditLogService;
-    constructor(hubretRepository, familyRepository, auditLogService) {
+    constructor(hubretRepository, familyRepository, commissionRepository, auditLogService) {
         this.hubretRepository = hubretRepository;
         this.familyRepository = familyRepository;
+        this.commissionRepository = commissionRepository;
         this.auditLogService = auditLogService;
     }
     async create(createHubretDto, userId) {
@@ -118,6 +121,30 @@ let HubretsService = class HubretsService {
             notes: 'Hubret updated',
         });
         return savedHubret;
+    }
+    async getCommission(hubretId) {
+        await this.findOne(hubretId);
+        const commission = await this.commissionRepository.findOne({
+            where: { hubretId },
+            relations: ['member1', 'member2', 'member3', 'member4', 'member5'],
+        });
+        return commission ?? null;
+    }
+    async upsertCommission(hubretId, dto, userId) {
+        await this.findOne(hubretId);
+        const uuidFields = ['member1Id', 'member2Id', 'member3Id', 'member4Id', 'member5Id'];
+        const sanitized = { ...dto };
+        uuidFields.forEach((field) => {
+            if (sanitized[field] === '') {
+                sanitized[field] = null;
+            }
+        });
+        let commission = await this.commissionRepository.findOne({ where: { hubretId } });
+        if (!commission) {
+            commission = this.commissionRepository.create({ hubretId });
+        }
+        Object.assign(commission, sanitized);
+        return this.commissionRepository.save(commission);
     }
     async remove(id, userId) {
         const hubret = await this.findOne(id);
@@ -241,7 +268,9 @@ exports.HubretsService = HubretsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(hubret_entity_1.Hubret)),
     __param(1, (0, typeorm_1.InjectRepository)(family_entity_1.Family)),
+    __param(2, (0, typeorm_1.InjectRepository)(commission_entity_1.Commission)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         audit_log_service_1.AuditLogService])
 ], HubretsService);

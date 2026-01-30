@@ -1,5 +1,6 @@
 import { Repository } from 'typeorm';
 import { Member, MembershipStatus, Gender, FamilyRelationship, MaritalStatus, Status } from '../../entities/member.entity';
+import { User } from '../../entities/user.entity';
 import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../../entities/employment-info.entity';
 import { FileAttachment } from '../../entities/file-attachment.entity';
 import { Contribution } from '../../entities/contribution.entity';
@@ -68,6 +69,7 @@ export interface CreateEmploymentDto {
 }
 export declare class MembersService {
     private memberRepository;
+    private userRepository;
     private employmentRepository;
     private fileAttachmentRepository;
     private contributionRepository;
@@ -75,7 +77,7 @@ export declare class MembersService {
     private auditLogService;
     private familiesService;
     private s3Client;
-    constructor(memberRepository: Repository<Member>, employmentRepository: Repository<EmploymentInfo>, fileAttachmentRepository: Repository<FileAttachment>, contributionRepository: Repository<Contribution>, positionHistoryRepository: Repository<PositionHistory>, auditLogService: AuditLogService, familiesService: FamiliesService);
+    constructor(memberRepository: Repository<Member>, userRepository: Repository<User>, employmentRepository: Repository<EmploymentInfo>, fileAttachmentRepository: Repository<FileAttachment>, contributionRepository: Repository<Contribution>, positionHistoryRepository: Repository<PositionHistory>, auditLogService: AuditLogService, familiesService: FamiliesService);
     create(createMemberDto: CreateMemberDto, userId: string, username: string): Promise<Member>;
     findAll(page?: number, limit?: number, search?: string, membershipStatus?: MembershipStatus, status?: Status, gender?: Gender, subCity?: string, familyId?: string): Promise<{
         members: Member[];
@@ -84,6 +86,7 @@ export declare class MembersService {
         limit: number;
     }>;
     findOne(id: string): Promise<Member>;
+    findMe(userId: string): Promise<Member>;
     update(id: string, updateMemberDto: UpdateMemberDto, userId: string, username: string): Promise<Member>;
     createEmploymentInfo(memberId: string, employmentDto: CreateEmploymentDto, userId: string, username: string): Promise<EmploymentInfo>;
     updateEmploymentInfo(memberId: string, employmentId: string, employmentDto: CreateEmploymentDto, userId: string, username: string): Promise<EmploymentInfo>;

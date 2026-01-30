@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from '@nestjs/common';
-import { HubretsService, CreateHubretDto, UpdateHubretDto } from './hubrets.service';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, UseGuards, Request } from '@nestjs/common';
+import { HubretsService, CreateHubretDto, UpdateHubretDto, CommissionDto } from './hubrets.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('hubrets')
@@ -20,6 +20,16 @@ export class HubretsController {
   @Get('stats')
   getStats() {
     return this.hubretsService.getStats();
+  }
+
+  @Get(':id/commission')
+  getCommission(@Param('id') id: string) {
+    return this.hubretsService.getCommission(id);
+  }
+
+  @Put(':id/commission')
+  upsertCommission(@Param('id') id: string, @Body() dto: CommissionDto, @Request() req) {
+    return this.hubretsService.upsertCommission(id, dto, req.user.id);
   }
 
   @Get(':id')

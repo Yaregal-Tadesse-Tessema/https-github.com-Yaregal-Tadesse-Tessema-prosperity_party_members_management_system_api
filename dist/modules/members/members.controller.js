@@ -27,6 +27,7 @@ let MembersController = class MembersController {
         return this.membersService.create(createMemberDto, req.user.id, req.user.username);
     }
     async findAll(req, page = '1', limit = '10', search, membershipStatus, status, gender, subCity, familyId) {
+        this.rejectMemberRole(req.user);
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
         const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
@@ -50,7 +51,19 @@ let MembersController = class MembersController {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer', 'read_only_viewer']);
         return this.membersService.getMemberStats();
     }
+    async getMe(req) {
+        const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
+        const member = await this.membersService.findMe(req.user.id);
+        if (!canViewSalary && member.employmentHistory) {
+            member.employmentHistory = member.employmentHistory.map((emp) => {
+                const { monthlySalary, ...rest } = emp;
+                return rest;
+            });
+        }
+        return member;
+    }
     async findOne(id, req) {
+        this.rejectMemberRole(req.user);
         const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
         const member = await this.membersService.findOne(id);
         if (!canViewSalary && member.employmentHistory) {
@@ -197,6 +210,11 @@ let MembersController = class MembersController {
     hasRole(user, roles) {
         return roles.includes(user.role);
     }
+    rejectMemberRole(user) {
+        if (user?.role === 'member') {
+            throw new common_1.ForbiddenException('Members can only access their own profile via My profile');
+        }
+    }
 };
 exports.MembersController = MembersController;
 __decorate([
@@ -229,6 +247,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], MembersController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "getMe", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

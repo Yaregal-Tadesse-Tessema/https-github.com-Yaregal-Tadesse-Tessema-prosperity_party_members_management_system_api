@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Member, MembershipStatus, Gender, FamilyRelationship, MaritalStatus, Status } from '../../entities/member.entity';
+import { User } from '../../entities/user.entity';
 import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../../entities/employment-info.entity';
 import { FileAttachment } from '../../entities/file-attachment.entity';
 import { Contribution } from '../../entities/contribution.entity';
@@ -83,6 +84,8 @@ export class MembersService {
   constructor(
     @InjectRepository(Member)
     private memberRepository: Repository<Member>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     @InjectRepository(EmploymentInfo)
     private employmentRepository: Repository<EmploymentInfo>,
     @InjectRepository(FileAttachment)
@@ -263,6 +266,18 @@ export class MembersService {
     }
 
     return member;
+  }
+
+  /** Returns the member linked to the current user (for "My profile"). Throws if user has no linked member. */
+  async findMe(userId: string): Promise<Member> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'memberId'],
+    });
+    if (!user?.memberId) {
+      throw new ForbiddenException('No member profile linked to this account');
+    }
+    return this.findOne(user.memberId);
   }
 
   async update(id: string, updateMemberDto: UpdateMemberDto, userId: string, username: string): Promise<Member> {

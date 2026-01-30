@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Member } from '../../entities/member.entity';
+import { User } from '../../entities/user.entity';
 import { EmploymentInfo } from '../../entities/employment-info.entity';
 import { FileAttachment } from '../../entities/file-attachment.entity';
 import { Contribution } from '../../entities/contribution.entity';
@@ -12,7 +13,7 @@ import { FamiliesModule } from '../families/families.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Member, EmploymentInfo, FileAttachment, Contribution, PositionHistory]),
+    TypeOrmModule.forFeature([Member, User, EmploymentInfo, FileAttachment, Contribution, PositionHistory]),
     AuditLogModule,
     FamiliesModule,
   ],
