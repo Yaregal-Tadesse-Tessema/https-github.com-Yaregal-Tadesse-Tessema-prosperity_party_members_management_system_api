@@ -137,7 +137,16 @@ export class HubretsService {
       }
     }
 
-    Object.assign(hubret, updateHubretDto);
+    // Convert empty-string UUIDs to null so PostgreSQL accepts them
+    const uuidFields = ['leaderMemberId', 'deputyPoliticalSectorHeadMemberId', 'deputyOrganizationSectorHeadMemberId', 'deputyFinanceSectorHeadMemberId'];
+    const sanitizedDto = { ...updateHubretDto };
+    uuidFields.forEach((field) => {
+      if (sanitizedDto[field] === '') {
+        sanitizedDto[field] = null;
+      }
+    });
+
+    Object.assign(hubret, sanitizedDto);
     hubret.updatedBy = userId;
 
     const savedHubret = await this.hubretRepository.save(hubret);

@@ -21,6 +21,12 @@ export declare class Family {
     status: FamilyStatus;
     headMemberId?: string;
     contactMemberId?: string;
+    organizerCoordinatorMemberId?: string;
+    organizerCoordinator?: Member;
+    financeMemberId?: string;
+    finance?: Member;
+    politicalSectorMemberId?: string;
+    politicalSector?: Member;
     hubretId?: string;
     hubret?: Hubret;
     totalMembers: number;

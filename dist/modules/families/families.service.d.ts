@@ -10,6 +10,9 @@ export interface CreateFamilyDto {
     familyType?: FamilyType;
     hubretId?: string;
     contactMemberId?: string;
+    organizerCoordinatorMemberId?: string;
+    financeMemberId?: string;
+    politicalSectorMemberId?: string;
     notes?: string;
 }
 export interface UpdateFamilyDto {
@@ -20,6 +23,9 @@ export interface UpdateFamilyDto {
     hubretId?: string;
     headMemberId?: string;
     contactMemberId?: string;
+    organizerCoordinatorMemberId?: string;
+    financeMemberId?: string;
+    politicalSectorMemberId?: string;
     notes?: string;
 }
 export declare class FamiliesService {

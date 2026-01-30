@@ -36,6 +36,12 @@ let Family = class Family {
     status;
     headMemberId;
     contactMemberId;
+    organizerCoordinatorMemberId;
+    organizerCoordinator;
+    financeMemberId;
+    finance;
+    politicalSectorMemberId;
+    politicalSector;
     hubretId;
     hubret;
     totalMembers;
@@ -86,6 +92,33 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Family.prototype, "contactMemberId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Family.prototype, "organizerCoordinatorMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'organizerCoordinatorMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Family.prototype, "organizerCoordinator", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Family.prototype, "financeMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'financeMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Family.prototype, "finance", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Family.prototype, "politicalSectorMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'politicalSectorMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Family.prototype, "politicalSector", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

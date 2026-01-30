@@ -104,7 +104,7 @@ let FamiliesService = class FamiliesService {
     async findOne(id) {
         const family = await this.familyRepository.findOne({
             where: { id },
-            relations: ['members'],
+            relations: ['members', 'organizerCoordinator', 'finance', 'politicalSector'],
         });
         if (!family) {
             throw new common_1.NotFoundException('Family not found');
@@ -143,7 +143,14 @@ let FamiliesService = class FamiliesService {
                 family.hubret = undefined;
             }
         }
-        Object.assign(family, updateFamilyDto);
+        const uuidFields = ['headMemberId', 'contactMemberId', 'organizerCoordinatorMemberId', 'financeMemberId', 'politicalSectorMemberId'];
+        const sanitizedDto = { ...updateFamilyDto };
+        uuidFields.forEach((field) => {
+            if (sanitizedDto[field] === '') {
+                sanitizedDto[field] = null;
+            }
+        });
+        Object.assign(family, sanitizedDto);
         family.updatedBy = userId;
         const savedFamily = await this.familyRepository.save(family);
         await this.auditLogService.logAction({

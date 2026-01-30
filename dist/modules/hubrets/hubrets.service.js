@@ -97,7 +97,14 @@ let HubretsService = class HubretsService {
                 throw new common_1.ConflictException('Hubret name already exists');
             }
         }
-        Object.assign(hubret, updateHubretDto);
+        const uuidFields = ['leaderMemberId', 'deputyPoliticalSectorHeadMemberId', 'deputyOrganizationSectorHeadMemberId', 'deputyFinanceSectorHeadMemberId'];
+        const sanitizedDto = { ...updateHubretDto };
+        uuidFields.forEach((field) => {
+            if (sanitizedDto[field] === '') {
+                sanitizedDto[field] = null;
+            }
+        });
+        Object.assign(hubret, sanitizedDto);
         hubret.updatedBy = userId;
         const savedHubret = await this.hubretRepository.save(hubret);
         await this.auditLogService.logAction({

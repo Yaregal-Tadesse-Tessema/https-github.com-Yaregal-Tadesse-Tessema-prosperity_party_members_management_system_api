@@ -14,6 +14,9 @@ export interface CreateFamilyDto {
   familyType?: FamilyType;
   hubretId?: string;
   contactMemberId?: string;
+  organizerCoordinatorMemberId?: string;
+  financeMemberId?: string;
+  politicalSectorMemberId?: string;
   notes?: string;
 }
 
@@ -25,6 +28,9 @@ export interface UpdateFamilyDto {
   hubretId?: string;
   headMemberId?: string;
   contactMemberId?: string;
+  organizerCoordinatorMemberId?: string;
+  financeMemberId?: string;
+  politicalSectorMemberId?: string;
   notes?: string;
 }
 
@@ -141,7 +147,7 @@ export class FamiliesService {
   async findOne(id: string): Promise<Family> {
     const family = await this.familyRepository.findOne({
       where: { id },
-      relations: ['members'],
+      relations: ['members', 'organizerCoordinator', 'finance', 'politicalSector'],
     });
 
     if (!family) {
@@ -189,8 +195,17 @@ export class FamiliesService {
       }
     }
 
+    // Convert empty-string UUIDs to null so PostgreSQL accepts them
+    const uuidFields = ['headMemberId', 'contactMemberId', 'organizerCoordinatorMemberId', 'financeMemberId', 'politicalSectorMemberId'];
+    const sanitizedDto = { ...updateFamilyDto };
+    uuidFields.forEach((field) => {
+      if (sanitizedDto[field] === '') {
+        sanitizedDto[field] = null;
+      }
+    });
+
     // Update family
-    Object.assign(family, updateFamilyDto);
+    Object.assign(family, sanitizedDto);
     family.updatedBy = userId;
 
     const savedFamily = await this.familyRepository.save(family);

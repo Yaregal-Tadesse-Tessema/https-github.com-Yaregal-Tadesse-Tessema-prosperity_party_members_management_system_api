@@ -50,6 +50,28 @@ export class Family {
   @Column({ nullable: true })
   contactMemberId?: string;
 
+  // Position holders (Member relations): Sebsabi, Finance, Political Sector
+  @Column({ nullable: true })
+  organizerCoordinatorMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'organizerCoordinatorMemberId' })
+  organizerCoordinator?: Member;
+
+  @Column({ nullable: true })
+  financeMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'financeMemberId' })
+  finance?: Member;
+
+  @Column({ nullable: true })
+  politicalSectorMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'politicalSectorMemberId' })
+  politicalSector?: Member;
+
   // Hubret Relationship
   @Column({ nullable: true })
   hubretId?: string;
