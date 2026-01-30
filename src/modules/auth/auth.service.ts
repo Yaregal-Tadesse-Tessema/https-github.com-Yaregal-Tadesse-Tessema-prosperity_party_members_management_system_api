@@ -236,6 +236,19 @@ export class AuthService {
     return result;
   }
 
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.password !== currentPassword) {
+      throw new UnauthorizedException('Invalid current password');
+    }
+    user.password = newPassword;
+    await this.userRepository.save(user);
+    return { message: 'Password updated successfully' };
+  }
+
   async remove(id: string, currentUserId: string): Promise<void> {
     if (id === currentUserId) {
       throw new ForbiddenException('You cannot delete your own account');

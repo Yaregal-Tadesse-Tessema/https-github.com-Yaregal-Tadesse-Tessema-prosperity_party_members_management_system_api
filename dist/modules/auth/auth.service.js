@@ -199,6 +199,18 @@ let AuthService = class AuthService {
         const { password: _, ...result } = saved;
         return result;
     }
+    async changePassword(userId, currentPassword, newPassword) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        if (user.password !== currentPassword) {
+            throw new common_1.UnauthorizedException('Invalid current password');
+        }
+        user.password = newPassword;
+        await this.userRepository.save(user);
+        return { message: 'Password updated successfully' };
+    }
     async remove(id, currentUserId) {
         if (id === currentUserId) {
             throw new common_1.ForbiddenException('You cannot delete your own account');

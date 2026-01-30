@@ -37,6 +37,9 @@ export declare class AuthService {
     private toUserResponse;
     findOne(id: string, includePassword?: boolean): Promise<Partial<User>>;
     update(id: string, dto: UpdateUserDto): Promise<Partial<User>>;
+    changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{
+        message: string;
+    }>;
     remove(id: string, currentUserId: string): Promise<void>;
     createDefaultAdmin(): Promise<void>;
 }

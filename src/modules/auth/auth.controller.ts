@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, Patch, Delete, Param, Query, UseGuards, Re
 import { AuthService, LoginDto, RegisterDto, AuthResponse, FindUsersQuery } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { UserRole } from '../../entities/user.entity';
 
 @Controller('auth')
@@ -22,6 +23,12 @@ export class AuthController {
   @Get('profile')
   async getProfile(@Request() req): Promise<any> {
     return this.authService.getProfile(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(@Request() req, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(req.user.id, dto.currentPassword, dto.newPassword);
   }
 
   @UseGuards(JwtAuthGuard)

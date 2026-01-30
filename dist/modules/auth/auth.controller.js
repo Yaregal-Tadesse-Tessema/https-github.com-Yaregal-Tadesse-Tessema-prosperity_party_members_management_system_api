@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const jwt_auth_guard_1 = require("./jwt-auth.guard");
 const update_user_dto_1 = require("./dto/update-user.dto");
+const change_password_dto_1 = require("./dto/change-password.dto");
 const user_entity_1 = require("../../entities/user.entity");
 let AuthController = class AuthController {
     authService;
@@ -31,6 +32,9 @@ let AuthController = class AuthController {
     }
     async getProfile(req) {
         return this.authService.getProfile(req.user.id);
+    }
+    async changePassword(req, dto) {
+        return this.authService.changePassword(req.user.id, dto.currentPassword, dto.newPassword);
     }
     async findAllUsers(search, role, isActive, includePassword) {
         const query = {};
@@ -76,6 +80,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('change-password'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, change_password_dto_1.ChangePasswordDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "changePassword", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('users'),
