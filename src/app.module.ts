@@ -39,11 +39,11 @@ import { SeederModule } from './seeder/seeder.module';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: '196.189.124.228',
+      host:'196.189.124.228',
       port: 5432,
       username: 'postgres',
-      password: 'root',
-      database: 'prosperity_party_members_management_system_dev',
+      password: 'esaapp123!',
+      database:'prosperity_party_members_management_system_dev',
       entities: [
         User,
         Member,

@@ -54,7 +54,7 @@ exports.AppModule = AppModule = __decorate([
                 host: '196.189.124.228',
                 port: 5432,
                 username: 'postgres',
-                password: 'root',
+                password: 'esaapp123!',
                 database: 'prosperity_party_members_management_system_dev',
                 entities: [
                     user_entity_1.User,
