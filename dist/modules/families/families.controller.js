@@ -44,6 +44,10 @@ let FamiliesController = class FamiliesController {
     async getStats() {
         return this.familiesService.getStats();
     }
+    async recomputeMemberCounts(req) {
+        this.checkPermission(req.user, ALLOWED_ROLES_CREATE_UPDATE);
+        return this.familiesService.recomputeAllFamilyMemberCounts();
+    }
     async findOne(id) {
         return this.familiesService.findOne(id);
     }
@@ -86,6 +90,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], FamiliesController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Post)('recompute-member-counts'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], FamiliesController.prototype, "recomputeMemberCounts", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

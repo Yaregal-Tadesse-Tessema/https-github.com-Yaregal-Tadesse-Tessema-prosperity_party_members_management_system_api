@@ -59,4 +59,7 @@ export declare class FamiliesService {
         inactiveFemaleMembers: number;
     }>;
     updateMemberCount(familyId: string): Promise<void>;
+    recomputeAllFamilyMemberCounts(): Promise<{
+        updated: number;
+    }>;
 }

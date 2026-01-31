@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual } from 'typeorm';
-import { Member, MembershipStatus, Gender, EducationLevel } from '../../entities/member.entity';
+import { Member, MembershipStatus, Gender, EducationLevel, Status } from '../../entities/member.entity';
 import { PositionHistory, PositionLevel, PositionStatus } from '../../entities/position-history.entity';
 import { Contribution, PaymentStatus, PaymentMethod } from '../../entities/contribution.entity';
 import { EmploymentInfo } from '../../entities/employment-info.entity';
@@ -237,6 +237,7 @@ export class ReportsService {
     return {
       totalMembers: members.length,
       memberMembers: members.filter(m => m.membershipStatus === MembershipStatus.MEMBER).length,
+      activeMembers: members.filter(m => m.status === Status.ACTIVE).length,
       newThisMonth: members.filter(m => {
         const regDate = new Date(m.registrationDate);
         const now = new Date();
@@ -371,14 +372,14 @@ export class ReportsService {
     totalCount: number;
   }> {
     const members = await this.memberRepository.find({
-      select: ['gender', 'membershipStatus'],
+      select: ['gender', 'membershipStatus', 'status'],
     });
 
     const genderBreakdown = {
       male: members.filter(m => m.gender === Gender.MALE).length,
       female: members.filter(m => m.gender === Gender.FEMALE).length,
-      maleMember: members.filter(m => m.gender === Gender.MALE && m.membershipStatus === MembershipStatus.MEMBER).length,
-      femaleMember: members.filter(m => m.gender === Gender.FEMALE && m.membershipStatus === MembershipStatus.MEMBER).length,
+      maleMember: members.filter(m => m.gender === Gender.MALE && m.status === Status.ACTIVE).length,
+      femaleMember: members.filter(m => m.gender === Gender.FEMALE && m.status === Status.ACTIVE).length,
       maleSupportive: members.filter(m => m.gender === Gender.MALE && m.membershipStatus === MembershipStatus.SUPPORTIVE_MEMBER).length,
       femaleSupportive: members.filter(m => m.gender === Gender.FEMALE && m.membershipStatus === MembershipStatus.SUPPORTIVE_MEMBER).length,
     };
@@ -388,6 +389,8 @@ export class ReportsService {
         totalMembers: members.length,
         totalMale: genderBreakdown.male,
         totalFemale: genderBreakdown.female,
+        maleMember: genderBreakdown.maleMember,
+        femaleMember: genderBreakdown.femaleMember,
         activeMale: genderBreakdown.maleMember,
         activeFemale: genderBreakdown.femaleMember,
         inactiveMale: genderBreakdown.maleSupportive,

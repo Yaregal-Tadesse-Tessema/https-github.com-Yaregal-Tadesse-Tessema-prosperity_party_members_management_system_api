@@ -183,6 +183,7 @@ let ReportsService = class ReportsService {
         return {
             totalMembers: members.length,
             memberMembers: members.filter(m => m.membershipStatus === member_entity_1.MembershipStatus.MEMBER).length,
+            activeMembers: members.filter(m => m.status === member_entity_1.Status.ACTIVE).length,
             newThisMonth: members.filter(m => {
                 const regDate = new Date(m.registrationDate);
                 const now = new Date();
@@ -297,13 +298,13 @@ let ReportsService = class ReportsService {
     }
     async getMemberByGenderReport() {
         const members = await this.memberRepository.find({
-            select: ['gender', 'membershipStatus'],
+            select: ['gender', 'membershipStatus', 'status'],
         });
         const genderBreakdown = {
             male: members.filter(m => m.gender === member_entity_1.Gender.MALE).length,
             female: members.filter(m => m.gender === member_entity_1.Gender.FEMALE).length,
-            maleMember: members.filter(m => m.gender === member_entity_1.Gender.MALE && m.membershipStatus === member_entity_1.MembershipStatus.MEMBER).length,
-            femaleMember: members.filter(m => m.gender === member_entity_1.Gender.FEMALE && m.membershipStatus === member_entity_1.MembershipStatus.MEMBER).length,
+            maleMember: members.filter(m => m.gender === member_entity_1.Gender.MALE && m.status === member_entity_1.Status.ACTIVE).length,
+            femaleMember: members.filter(m => m.gender === member_entity_1.Gender.FEMALE && m.status === member_entity_1.Status.ACTIVE).length,
             maleSupportive: members.filter(m => m.gender === member_entity_1.Gender.MALE && m.membershipStatus === member_entity_1.MembershipStatus.SUPPORTIVE_MEMBER).length,
             femaleSupportive: members.filter(m => m.gender === member_entity_1.Gender.FEMALE && m.membershipStatus === member_entity_1.MembershipStatus.SUPPORTIVE_MEMBER).length,
         };
@@ -312,6 +313,8 @@ let ReportsService = class ReportsService {
                 totalMembers: members.length,
                 totalMale: genderBreakdown.male,
                 totalFemale: genderBreakdown.female,
+                maleMember: genderBreakdown.maleMember,
+                femaleMember: genderBreakdown.femaleMember,
                 activeMale: genderBreakdown.maleMember,
                 activeFemale: genderBreakdown.femaleMember,
                 inactiveMale: genderBreakdown.maleSupportive,

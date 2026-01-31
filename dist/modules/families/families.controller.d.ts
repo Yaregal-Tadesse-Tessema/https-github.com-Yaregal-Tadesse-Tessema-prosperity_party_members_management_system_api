@@ -23,6 +23,9 @@ export declare class FamiliesController {
         inactiveMaleMembers: number;
         inactiveFemaleMembers: number;
     }>;
+    recomputeMemberCounts(req: any): Promise<{
+        updated: number;
+    }>;
     findOne(id: string): Promise<import("../../entities/family.entity").Family>;
     findByFamilyId(familyId: string): Promise<import("../../entities/family.entity").Family>;
     update(id: string, updateFamilyDto: UpdateFamilyDto, req: any): Promise<import("../../entities/family.entity").Family>;

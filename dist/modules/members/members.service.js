@@ -463,6 +463,13 @@ let MembersService = class MembersService {
         const supportiveFemaleMembers = supportiveMembers.filter(m => isFemale(m.gender)).length;
         const candidateMaleMembers = candidateMembers.filter(m => isMale(m.gender)).length;
         const candidateFemaleMembers = candidateMembers.filter(m => isFemale(m.gender)).length;
+        const activeByStatus = await this.memberRepository.find({
+            select: ['gender'],
+            where: { status: member_entity_1.Status.ACTIVE },
+        });
+        const activeMembers = activeByStatus.length;
+        const activeMaleMembersByStatus = activeByStatus.filter(m => isMale(m.gender)).length;
+        const activeFemaleMembersByStatus = activeByStatus.filter(m => isFemale(m.gender)).length;
         console.log('Gender counts - All members:', allMembers.length);
         console.log('Gender counts - Total Male:', totalMaleMembers, 'Total Female:', totalFemaleMembers);
         console.log('Gender counts - Member Male:', memberMaleMembers, 'Member Female:', memberFemaleMembers);
@@ -481,6 +488,9 @@ let MembersService = class MembersService {
             supportiveFemaleMembers: 0,
             candidateMaleMembers: 0,
             candidateFemaleMembers: 0,
+            activeMembers: 0,
+            activeMaleMembers: 0,
+            activeFemaleMembers: 0,
         };
         stats.forEach(stat => {
             const count = parseInt(stat.count);
@@ -505,6 +515,9 @@ let MembersService = class MembersService {
         result.supportiveFemaleMembers = supportiveFemaleMembers;
         result.candidateMaleMembers = candidateMaleMembers;
         result.candidateFemaleMembers = candidateFemaleMembers;
+        result.activeMembers = activeMembers;
+        result.activeMaleMembers = activeMaleMembersByStatus;
+        result.activeFemaleMembers = activeFemaleMembersByStatus;
         console.log('Final result:', JSON.stringify(result, null, 2));
         return result;
     }

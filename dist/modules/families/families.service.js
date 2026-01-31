@@ -94,6 +94,23 @@ let FamiliesService = class FamiliesService {
             .skip((page - 1) * limit)
             .take(limit);
         const [families, total] = await queryBuilder.getManyAndCount();
+        if (families.length > 0) {
+            const familyIds = families.map((f) => f.id);
+            const counts = await this.memberRepository
+                .createQueryBuilder('member')
+                .select('member.familyId', 'familyId')
+                .addSelect('COUNT(*)', 'total')
+                .addSelect(`SUM(CASE WHEN member.status = :active THEN 1 ELSE 0 END)`, 'active')
+                .where('member.familyId IN (:...familyIds)', { familyIds, active: member_entity_1.Status.ACTIVE })
+                .groupBy('member.familyId')
+                .getRawMany();
+            const countByFamilyId = new Map(counts.map((c) => [c.familyId, { total: parseInt(c.total || '0', 10), active: parseInt(c.active || '0', 10) }]));
+            families.forEach((f) => {
+                const c = countByFamilyId.get(f.id);
+                f.totalMembers = c ? c.total : 0;
+                f.activeMembers = c ? c.active : 0;
+            });
+        }
         return {
             families,
             total,
@@ -109,6 +126,10 @@ let FamiliesService = class FamiliesService {
         if (!family) {
             throw new common_1.NotFoundException('Family not found');
         }
+        const totalMembers = family.members?.length ?? 0;
+        const activeMembers = family.members?.filter((m) => m.status === member_entity_1.Status.ACTIVE).length ?? 0;
+        family.totalMembers = totalMembers;
+        family.activeMembers = activeMembers;
         return family;
     }
     async findByFamilyId(familyId) {
@@ -194,10 +215,10 @@ let FamiliesService = class FamiliesService {
             .getMany();
         const totalMaleMembers = allMembers.filter(m => m.gender === member_entity_1.Gender.MALE).length;
         const totalFemaleMembers = allMembers.filter(m => m.gender === member_entity_1.Gender.FEMALE).length;
-        const activeMembers = allMembers.filter(m => m.membershipStatus === member_entity_1.MembershipStatus.MEMBER);
+        const activeMembers = allMembers.filter(m => m.status === member_entity_1.Status.ACTIVE);
         const activeMaleMembers = activeMembers.filter(m => m.gender === member_entity_1.Gender.MALE).length;
         const activeFemaleMembers = activeMembers.filter(m => m.gender === member_entity_1.Gender.FEMALE).length;
-        const inactiveMembers = allMembers.filter(m => m.membershipStatus === member_entity_1.MembershipStatus.SUPPORTIVE_MEMBER);
+        const inactiveMembers = allMembers.filter(m => m.status !== member_entity_1.Status.ACTIVE);
         const inactiveMaleMembers = inactiveMembers.filter(m => m.gender === member_entity_1.Gender.MALE).length;
         const inactiveFemaleMembers = inactiveMembers.filter(m => m.gender === member_entity_1.Gender.FEMALE).length;
         return {
@@ -221,11 +242,18 @@ let FamiliesService = class FamiliesService {
         if (!family)
             return;
         const totalMembers = family.members?.length || 0;
-        const activeMembers = family.members?.filter(member => member.membershipStatus === member_entity_1.MembershipStatus.MEMBER).length || 0;
+        const activeMembers = family.members?.filter(member => member.status === member_entity_1.Status.ACTIVE).length || 0;
         await this.familyRepository.update(familyId, {
             totalMembers,
             activeMembers,
         });
+    }
+    async recomputeAllFamilyMemberCounts() {
+        const families = await this.familyRepository.find({ select: ['id'] });
+        for (const f of families) {
+            await this.updateMemberCount(f.id);
+        }
+        return { updated: families.length };
     }
 };
 exports.FamiliesService = FamiliesService;

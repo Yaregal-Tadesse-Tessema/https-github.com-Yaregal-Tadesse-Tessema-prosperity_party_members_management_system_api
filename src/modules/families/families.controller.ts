@@ -59,6 +59,12 @@ export class FamiliesController {
     return this.familiesService.getStats();
   }
 
+  @Post('recompute-member-counts')
+  async recomputeMemberCounts(@Request() req) {
+    this.checkPermission(req.user, ALLOWED_ROLES_CREATE_UPDATE);
+    return this.familiesService.recomputeAllFamilyMemberCounts();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.familiesService.findOne(id);
