@@ -87,6 +87,20 @@ export declare class MembersService {
     }>;
     findOne(id: string): Promise<Member>;
     findMe(userId: string): Promise<Member>;
+    syncUsersFromMembers(): Promise<{
+        created: number;
+        skipped: number;
+        errors: {
+            memberId: string;
+            partyId?: number;
+            message: string;
+        }[];
+    }>;
+    syncUserFromMember(memberId: string): Promise<{
+        created: boolean;
+        skipped: boolean;
+        error?: string;
+    }>;
     update(id: string, updateMemberDto: UpdateMemberDto, userId: string, username: string): Promise<Member>;
     createEmploymentInfo(memberId: string, employmentDto: CreateEmploymentDto, userId: string, username: string): Promise<EmploymentInfo>;
     updateEmploymentInfo(memberId: string, employmentId: string, employmentDto: CreateEmploymentDto, userId: string, username: string): Promise<EmploymentInfo>;

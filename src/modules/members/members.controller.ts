@@ -92,6 +92,18 @@ export class MembersController {
     return member;
   }
 
+  @Post('sync-users')
+  async syncUsers(@Request() req) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin']);
+    return this.membersService.syncUsersFromMembers();
+  }
+
+  @Post(':id/sync-user')
+  async syncUser(@Param('id') id: string, @Request() req) {
+    this.checkPermission(req.user, ['system_admin', 'party_admin']);
+    return this.membersService.syncUserFromMember(id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req) {
     this.rejectMemberRole(req.user);

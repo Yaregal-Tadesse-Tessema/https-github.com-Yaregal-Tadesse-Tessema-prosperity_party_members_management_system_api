@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException, 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { Member, MembershipStatus, Gender, FamilyRelationship, MaritalStatus, Status } from '../../entities/member.entity';
-import { User } from '../../entities/user.entity';
+import { User, UserRole } from '../../entities/user.entity';
 import { EmploymentInfo, EmploymentStatus, SalaryRange } from '../../entities/employment-info.entity';
 import { FileAttachment } from '../../entities/file-attachment.entity';
 import { Contribution } from '../../entities/contribution.entity';
@@ -278,6 +278,108 @@ export class MembersService {
       throw new ForbiddenException('No member profile linked to this account');
     }
     return this.findOne(user.memberId);
+  }
+
+  /** Get all members and create a user for each member who does not have one (matched by phone). Default password: C0mplex! */
+  async syncUsersFromMembers(): Promise<{ created: number; skipped: number; errors: { memberId: string; partyId?: number; message: string }[] }> {
+    const result = { created: 0, skipped: 0, errors: [] as { memberId: string; partyId?: number; message: string }[] };
+    const members = await this.memberRepository.find({
+      select: ['id', 'partyId', 'primaryPhone', 'fullNameEnglish', 'email'],
+    });
+
+    for (const member of members) {
+      const phone = member.primaryPhone?.trim();
+      if (!phone) {
+        result.errors.push({ memberId: member.id, partyId: member.partyId, message: 'Member has no primary phone' });
+        continue;
+      }
+
+      const existingUser = await this.userRepository.findOne({
+        where: { phone },
+      });
+      if (existingUser) {
+        result.skipped++;
+        continue;
+      }
+
+      let username = phone;
+      let existingByUsername = await this.userRepository.findOne({ where: { username } });
+      if (existingByUsername) {
+        username = `member_${member.partyId}`;
+        existingByUsername = await this.userRepository.findOne({ where: { username } });
+        if (existingByUsername) {
+          result.errors.push({ memberId: member.id, partyId: member.partyId, message: 'Username collision' });
+          continue;
+        }
+      }
+
+      try {
+        const user = this.userRepository.create({
+          username,
+          password: 'C0mplex!',
+          fullName: member.fullNameEnglish || 'Member',
+          role: UserRole.MEMBER,
+          isActive: true,
+          phone,
+          email: member.email || undefined,
+          memberId: member.id,
+        });
+        await this.userRepository.save(user);
+        result.created++;
+      } catch (err: any) {
+        result.errors.push({
+          memberId: member.id,
+          partyId: member.partyId,
+          message: err?.message || 'Failed to create user',
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /** Sync a single member to a user (create user if none exists for primary phone). */
+  async syncUserFromMember(memberId: string): Promise<{ created: boolean; skipped: boolean; error?: string }> {
+    const member = await this.memberRepository.findOne({
+      where: { id: memberId },
+      select: ['id', 'partyId', 'primaryPhone', 'fullNameEnglish', 'email'],
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+    const phone = member.primaryPhone?.trim();
+    if (!phone) {
+      return { created: false, skipped: false, error: 'Member has no primary phone' };
+    }
+    const existingUser = await this.userRepository.findOne({ where: { phone } });
+    if (existingUser) {
+      return { created: false, skipped: true };
+    }
+    let username = phone;
+    let existingByUsername = await this.userRepository.findOne({ where: { username } });
+    if (existingByUsername) {
+      username = `member_${member.partyId}`;
+      existingByUsername = await this.userRepository.findOne({ where: { username } });
+      if (existingByUsername) {
+        return { created: false, skipped: false, error: 'Username collision' };
+      }
+    }
+    try {
+      const user = this.userRepository.create({
+        username,
+        password: 'C0mplex!',
+        fullName: member.fullNameEnglish || 'Member',
+        role: UserRole.MEMBER,
+        isActive: true,
+        phone,
+        email: member.email || undefined,
+        memberId: member.id,
+      });
+      await this.userRepository.save(user);
+      return { created: true, skipped: false };
+    } catch (err: any) {
+      return { created: false, skipped: false, error: err?.message || 'Failed to create user' };
+    }
   }
 
   async update(id: string, updateMemberDto: UpdateMemberDto, userId: string, username: string): Promise<Member> {

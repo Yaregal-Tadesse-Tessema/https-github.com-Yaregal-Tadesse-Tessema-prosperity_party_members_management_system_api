@@ -25,6 +25,20 @@ export declare class MembersController {
         candidateFemaleMembers: number;
     }>;
     getMe(req: any): Promise<import("../../entities/member.entity").Member>;
+    syncUsers(req: any): Promise<{
+        created: number;
+        skipped: number;
+        errors: {
+            memberId: string;
+            partyId?: number;
+            message: string;
+        }[];
+    }>;
+    syncUser(id: string, req: any): Promise<{
+        created: boolean;
+        skipped: boolean;
+        error?: string;
+    }>;
     findOne(id: string, req: any): Promise<import("../../entities/member.entity").Member>;
     update(id: string, updateMemberDto: UpdateMemberDto, req: any): Promise<import("../../entities/member.entity").Member>;
     delete(id: string, req: any): Promise<{

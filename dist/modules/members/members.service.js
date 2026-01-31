@@ -176,6 +176,101 @@ let MembersService = class MembersService {
         }
         return this.findOne(user.memberId);
     }
+    async syncUsersFromMembers() {
+        const result = { created: 0, skipped: 0, errors: [] };
+        const members = await this.memberRepository.find({
+            select: ['id', 'partyId', 'primaryPhone', 'fullNameEnglish', 'email'],
+        });
+        for (const member of members) {
+            const phone = member.primaryPhone?.trim();
+            if (!phone) {
+                result.errors.push({ memberId: member.id, partyId: member.partyId, message: 'Member has no primary phone' });
+                continue;
+            }
+            const existingUser = await this.userRepository.findOne({
+                where: { phone },
+            });
+            if (existingUser) {
+                result.skipped++;
+                continue;
+            }
+            let username = phone;
+            let existingByUsername = await this.userRepository.findOne({ where: { username } });
+            if (existingByUsername) {
+                username = `member_${member.partyId}`;
+                existingByUsername = await this.userRepository.findOne({ where: { username } });
+                if (existingByUsername) {
+                    result.errors.push({ memberId: member.id, partyId: member.partyId, message: 'Username collision' });
+                    continue;
+                }
+            }
+            try {
+                const user = this.userRepository.create({
+                    username,
+                    password: 'C0mplex!',
+                    fullName: member.fullNameEnglish || 'Member',
+                    role: user_entity_1.UserRole.MEMBER,
+                    isActive: true,
+                    phone,
+                    email: member.email || undefined,
+                    memberId: member.id,
+                });
+                await this.userRepository.save(user);
+                result.created++;
+            }
+            catch (err) {
+                result.errors.push({
+                    memberId: member.id,
+                    partyId: member.partyId,
+                    message: err?.message || 'Failed to create user',
+                });
+            }
+        }
+        return result;
+    }
+    async syncUserFromMember(memberId) {
+        const member = await this.memberRepository.findOne({
+            where: { id: memberId },
+            select: ['id', 'partyId', 'primaryPhone', 'fullNameEnglish', 'email'],
+        });
+        if (!member) {
+            throw new common_1.NotFoundException('Member not found');
+        }
+        const phone = member.primaryPhone?.trim();
+        if (!phone) {
+            return { created: false, skipped: false, error: 'Member has no primary phone' };
+        }
+        const existingUser = await this.userRepository.findOne({ where: { phone } });
+        if (existingUser) {
+            return { created: false, skipped: true };
+        }
+        let username = phone;
+        let existingByUsername = await this.userRepository.findOne({ where: { username } });
+        if (existingByUsername) {
+            username = `member_${member.partyId}`;
+            existingByUsername = await this.userRepository.findOne({ where: { username } });
+            if (existingByUsername) {
+                return { created: false, skipped: false, error: 'Username collision' };
+            }
+        }
+        try {
+            const user = this.userRepository.create({
+                username,
+                password: 'C0mplex!',
+                fullName: member.fullNameEnglish || 'Member',
+                role: user_entity_1.UserRole.MEMBER,
+                isActive: true,
+                phone,
+                email: member.email || undefined,
+                memberId: member.id,
+            });
+            await this.userRepository.save(user);
+            return { created: true, skipped: false };
+        }
+        catch (err) {
+            return { created: false, skipped: false, error: err?.message || 'Failed to create user' };
+        }
+    }
     async update(id, updateMemberDto, userId, username) {
         const member = await this.findOne(id);
         if (updateMemberDto.partyId !== undefined && updateMemberDto.partyId !== member.partyId) {

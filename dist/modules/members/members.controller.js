@@ -62,6 +62,14 @@ let MembersController = class MembersController {
         }
         return member;
     }
+    async syncUsers(req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin']);
+        return this.membersService.syncUsersFromMembers();
+    }
+    async syncUser(id, req) {
+        this.checkPermission(req.user, ['system_admin', 'party_admin']);
+        return this.membersService.syncUserFromMember(id);
+    }
     async findOne(id, req) {
         this.rejectMemberRole(req.user);
         const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
@@ -254,6 +262,21 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], MembersController.prototype, "getMe", null);
+__decorate([
+    (0, common_1.Post)('sync-users'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "syncUsers", null);
+__decorate([
+    (0, common_1.Post)(':id/sync-user'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MembersController.prototype, "syncUser", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
