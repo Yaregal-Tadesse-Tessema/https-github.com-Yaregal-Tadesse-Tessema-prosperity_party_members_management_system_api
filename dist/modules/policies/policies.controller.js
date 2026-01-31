@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PoliciesController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const policies_service_1 = require("./policies.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const ADMIN_ROLES = ['system_admin', 'party_admin', 'data_entry_officer'];
@@ -30,6 +31,18 @@ let PoliciesController = class PoliciesController {
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);
         return this.policiesService.findAll(pageNum, limitNum, category);
+    }
+    uploadFiles(id, uploaded, req) {
+        this.requireAdmin(req.user);
+        const list = uploaded?.files || [];
+        if (list.length === 0) {
+            return this.policiesService.findOne(id);
+        }
+        return this.policiesService.uploadFiles(id, list);
+    }
+    removeFile(id, url, req) {
+        this.requireAdmin(req.user);
+        return this.policiesService.removeFile(id, url);
     }
     findOne(id) {
         return this.policiesService.findOne(id);
@@ -67,6 +80,25 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], PoliciesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Post)(':id/files'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([{ name: 'files', maxCount: 10 }])),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.UploadedFiles)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], PoliciesController.prototype, "uploadFiles", null);
+__decorate([
+    (0, common_1.Delete)(':id/files'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('url')),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], PoliciesController.prototype, "removeFile", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

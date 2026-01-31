@@ -35,6 +35,7 @@ let Family = class Family {
     familyType;
     status;
     headMemberId;
+    head;
     contactMemberId;
     organizerCoordinatorMemberId;
     organizerCoordinator;
@@ -88,6 +89,11 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Family.prototype, "headMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'headMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Family.prototype, "head", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

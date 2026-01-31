@@ -46,6 +46,10 @@ export class Family {
   @Column({ nullable: true })
   headMemberId?: string;
 
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'headMemberId' })
+  head?: Member;
+
   // Contact Member Information
   @Column({ nullable: true })
   contactMemberId?: string;

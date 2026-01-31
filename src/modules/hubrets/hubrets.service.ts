@@ -20,6 +20,10 @@ export interface CreateHubretDto {
   hubretNameAmharic: string;
   hubretNameEnglish: string;
   leaderMemberId?: string;
+  politicalSectorHeadMemberId?: string;
+  organizationSectorHeadMemberId?: string;
+  financeSectorHeadMemberId?: string;
+  mediaSectorHeadMemberId?: string;
   deputyPoliticalSectorHeadMemberId?: string;
   deputyOrganizationSectorHeadMemberId?: string;
   deputyFinanceSectorHeadMemberId?: string;
@@ -38,6 +42,10 @@ export interface UpdateHubretDto {
   hubretNameEnglish?: string;
   status?: HubretStatus;
   leaderMemberId?: string;
+  politicalSectorHeadMemberId?: string;
+  organizationSectorHeadMemberId?: string;
+  financeSectorHeadMemberId?: string;
+  mediaSectorHeadMemberId?: string;
   deputyPoliticalSectorHeadMemberId?: string;
   deputyOrganizationSectorHeadMemberId?: string;
   deputyFinanceSectorHeadMemberId?: string;
@@ -119,6 +127,10 @@ export class HubretsService {
         'families',
         'families.members',
         'leader',
+        'politicalSectorHead',
+        'organizationSectorHead',
+        'financeSectorHead',
+        'mediaSectorHead',
         'deputyPoliticalSectorHead',
         'deputyOrganizationSectorHead',
         'deputyFinanceSectorHead',
@@ -150,7 +162,7 @@ export class HubretsService {
     }
 
     // Convert empty-string UUIDs to null so PostgreSQL accepts them
-    const uuidFields = ['leaderMemberId', 'deputyPoliticalSectorHeadMemberId', 'deputyOrganizationSectorHeadMemberId', 'deputyFinanceSectorHeadMemberId'];
+    const uuidFields = ['leaderMemberId', 'politicalSectorHeadMemberId', 'organizationSectorHeadMemberId', 'financeSectorHeadMemberId', 'mediaSectorHeadMemberId', 'deputyPoliticalSectorHeadMemberId', 'deputyOrganizationSectorHeadMemberId', 'deputyFinanceSectorHeadMemberId'];
     const sanitizedDto = { ...updateHubretDto };
     uuidFields.forEach((field) => {
       if (sanitizedDto[field] === '') {

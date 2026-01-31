@@ -9,6 +9,7 @@ export interface CreateFamilyDto {
     familyNameEnglish: string;
     familyType?: FamilyType;
     hubretId?: string;
+    headMemberId?: string;
     contactMemberId?: string;
     organizerCoordinatorMemberId?: string;
     financeMemberId?: string;

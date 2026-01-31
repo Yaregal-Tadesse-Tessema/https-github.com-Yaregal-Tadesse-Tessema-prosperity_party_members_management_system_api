@@ -13,6 +13,7 @@ export interface CreateFamilyDto {
   familyNameEnglish: string;
   familyType?: FamilyType;
   hubretId?: string;
+  headMemberId?: string;
   contactMemberId?: string;
   organizerCoordinatorMemberId?: string;
   financeMemberId?: string;
@@ -147,7 +148,7 @@ export class FamiliesService {
   async findOne(id: string): Promise<Family> {
     const family = await this.familyRepository.findOne({
       where: { id },
-      relations: ['members', 'organizerCoordinator', 'finance', 'politicalSector'],
+      relations: ['members', 'head', 'organizerCoordinator', 'finance', 'politicalSector'],
     });
 
     if (!family) {

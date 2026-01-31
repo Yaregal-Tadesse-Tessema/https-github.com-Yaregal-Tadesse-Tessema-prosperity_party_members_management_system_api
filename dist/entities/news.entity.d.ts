@@ -5,6 +5,7 @@ export declare class News {
     publishedAt: Date;
     author?: string;
     attachmentUrl?: string;
+    imageUrls?: string[];
     createdAt: Date;
     updatedAt: Date;
     createdBy?: string;

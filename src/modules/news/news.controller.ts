@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, ForbiddenException, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { NewsService, CreateNewsDto, UpdateNewsDto } from './news.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -23,6 +24,31 @@ export class NewsController {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     return this.newsService.findAll(pageNum, limitNum);
+  }
+
+  @Post(':id/images')
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 10 }]))
+  uploadImages(
+    @Param('id') id: string,
+    @UploadedFiles() files: { images?: Express.Multer.File[] },
+    @Request() req,
+  ) {
+    this.requireAdmin(req.user);
+    const list = files?.images || [];
+    if (list.length === 0) {
+      return this.newsService.findOne(id);
+    }
+    return this.newsService.uploadImages(id, list);
+  }
+
+  @Delete(':id/images')
+  removeImage(
+    @Param('id') id: string,
+    @Body('url') url: string,
+    @Request() req,
+  ) {
+    this.requireAdmin(req.user);
+    return this.newsService.removeImage(id, url);
   }
 
   @Get(':id')

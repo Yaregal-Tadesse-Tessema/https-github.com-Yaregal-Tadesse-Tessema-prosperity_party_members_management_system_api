@@ -27,6 +27,14 @@ let Hubret = class Hubret {
     status;
     leaderMemberId;
     leader;
+    politicalSectorHeadMemberId;
+    politicalSectorHead;
+    organizationSectorHeadMemberId;
+    organizationSectorHead;
+    financeSectorHeadMemberId;
+    financeSectorHead;
+    mediaSectorHeadMemberId;
+    mediaSectorHead;
     deputyPoliticalSectorHeadMemberId;
     deputyPoliticalSectorHead;
     deputyOrganizationSectorHeadMemberId;
@@ -83,6 +91,42 @@ __decorate([
     (0, typeorm_1.JoinColumn)({ name: 'leaderMemberId' }),
     __metadata("design:type", member_entity_1.Member)
 ], Hubret.prototype, "leader", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "politicalSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'politicalSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "politicalSectorHead", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "organizationSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'organizationSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "organizationSectorHead", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "financeSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'financeSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "financeSectorHead", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Hubret.prototype, "mediaSectorHeadMemberId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => member_entity_1.Member, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'mediaSectorHeadMemberId' }),
+    __metadata("design:type", member_entity_1.Member)
+], Hubret.prototype, "mediaSectorHead", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

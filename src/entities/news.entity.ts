@@ -20,6 +20,9 @@ export class News {
   @Column({ nullable: true })
   attachmentUrl?: string;
 
+  @Column({ type: 'json', nullable: true })
+  imageUrls?: string[];
+
   @CreateDateColumn()
   createdAt: Date;
 

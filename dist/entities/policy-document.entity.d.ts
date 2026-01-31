@@ -3,6 +3,7 @@ export declare class PolicyDocument {
     title: string;
     description?: string;
     fileUrl?: string;
+    fileUrls?: string[];
     category?: string;
     createdAt: Date;
     updatedAt: Date;

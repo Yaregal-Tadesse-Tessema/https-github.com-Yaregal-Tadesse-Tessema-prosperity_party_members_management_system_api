@@ -15,6 +15,10 @@ export interface CreateHubretDto {
     hubretNameAmharic: string;
     hubretNameEnglish: string;
     leaderMemberId?: string;
+    politicalSectorHeadMemberId?: string;
+    organizationSectorHeadMemberId?: string;
+    financeSectorHeadMemberId?: string;
+    mediaSectorHeadMemberId?: string;
     deputyPoliticalSectorHeadMemberId?: string;
     deputyOrganizationSectorHeadMemberId?: string;
     deputyFinanceSectorHeadMemberId?: string;
@@ -32,6 +36,10 @@ export interface UpdateHubretDto {
     hubretNameEnglish?: string;
     status?: HubretStatus;
     leaderMemberId?: string;
+    politicalSectorHeadMemberId?: string;
+    organizationSectorHeadMemberId?: string;
+    financeSectorHeadMemberId?: string;
+    mediaSectorHeadMemberId?: string;
     deputyPoliticalSectorHeadMemberId?: string;
     deputyOrganizationSectorHeadMemberId?: string;
     deputyFinanceSectorHeadMemberId?: string;

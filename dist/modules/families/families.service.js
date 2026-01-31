@@ -104,7 +104,7 @@ let FamiliesService = class FamiliesService {
     async findOne(id) {
         const family = await this.familyRepository.findOne({
             where: { id },
-            relations: ['members', 'organizerCoordinator', 'finance', 'politicalSector'],
+            relations: ['members', 'head', 'organizerCoordinator', 'finance', 'politicalSector'],
         });
         if (!family) {
             throw new common_1.NotFoundException('Family not found');

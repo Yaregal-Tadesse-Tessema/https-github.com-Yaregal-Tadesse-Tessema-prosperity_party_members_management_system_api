@@ -13,6 +13,14 @@ export declare class Hubret {
     status: HubretStatus;
     leaderMemberId?: string;
     leader?: Member;
+    politicalSectorHeadMemberId?: string;
+    politicalSectorHead?: Member;
+    organizationSectorHeadMemberId?: string;
+    organizationSectorHead?: Member;
+    financeSectorHeadMemberId?: string;
+    financeSectorHead?: Member;
+    mediaSectorHeadMemberId?: string;
+    mediaSectorHead?: Member;
     deputyPoliticalSectorHeadMemberId?: string;
     deputyPoliticalSectorHead?: Member;
     deputyOrganizationSectorHeadMemberId?: string;

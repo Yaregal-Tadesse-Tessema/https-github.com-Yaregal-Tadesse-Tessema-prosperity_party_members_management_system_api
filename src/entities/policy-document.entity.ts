@@ -14,6 +14,9 @@ export class PolicyDocument {
   @Column({ nullable: true })
   fileUrl?: string;
 
+  @Column({ type: 'json', nullable: true })
+  fileUrls?: string[];
+
   @Column({ nullable: true })
   category?: string;
 

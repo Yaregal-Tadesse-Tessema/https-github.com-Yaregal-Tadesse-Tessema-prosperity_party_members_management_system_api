@@ -36,6 +36,35 @@ export class Hubret {
   @JoinColumn({ name: 'leaderMemberId' })
   leader?: Member;
 
+  // Sector Heads (Member relations)
+  @Column({ nullable: true })
+  politicalSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'politicalSectorHeadMemberId' })
+  politicalSectorHead?: Member;
+
+  @Column({ nullable: true })
+  organizationSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'organizationSectorHeadMemberId' })
+  organizationSectorHead?: Member;
+
+  @Column({ nullable: true })
+  financeSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'financeSectorHeadMemberId' })
+  financeSectorHead?: Member;
+
+  @Column({ nullable: true })
+  mediaSectorHeadMemberId?: string;
+
+  @ManyToOne(() => Member, { nullable: true })
+  @JoinColumn({ name: 'mediaSectorHeadMemberId' })
+  mediaSectorHead?: Member;
+
   // Deputy Sector Heads (Member relations)
   @Column({ nullable: true })
   deputyPoliticalSectorHeadMemberId?: string;

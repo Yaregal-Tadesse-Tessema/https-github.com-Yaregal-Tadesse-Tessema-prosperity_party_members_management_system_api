@@ -18,6 +18,7 @@ let News = class News {
     publishedAt;
     author;
     attachmentUrl;
+    imageUrls;
     createdAt;
     updatedAt;
     createdBy;
@@ -47,6 +48,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], News.prototype, "attachmentUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], News.prototype, "imageUrls", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

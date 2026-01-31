@@ -77,6 +77,10 @@ let HubretsService = class HubretsService {
                 'families',
                 'families.members',
                 'leader',
+                'politicalSectorHead',
+                'organizationSectorHead',
+                'financeSectorHead',
+                'mediaSectorHead',
                 'deputyPoliticalSectorHead',
                 'deputyOrganizationSectorHead',
                 'deputyFinanceSectorHead',
@@ -100,7 +104,7 @@ let HubretsService = class HubretsService {
                 throw new common_1.ConflictException('Hubret name already exists');
             }
         }
-        const uuidFields = ['leaderMemberId', 'deputyPoliticalSectorHeadMemberId', 'deputyOrganizationSectorHeadMemberId', 'deputyFinanceSectorHeadMemberId'];
+        const uuidFields = ['leaderMemberId', 'politicalSectorHeadMemberId', 'organizationSectorHeadMemberId', 'financeSectorHeadMemberId', 'mediaSectorHeadMemberId', 'deputyPoliticalSectorHeadMemberId', 'deputyOrganizationSectorHeadMemberId', 'deputyFinanceSectorHeadMemberId'];
         const sanitizedDto = { ...updateHubretDto };
         uuidFields.forEach((field) => {
             if (sanitizedDto[field] === '') {

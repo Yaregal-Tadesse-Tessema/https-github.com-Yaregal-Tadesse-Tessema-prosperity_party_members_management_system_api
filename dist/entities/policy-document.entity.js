@@ -16,6 +16,7 @@ let PolicyDocument = class PolicyDocument {
     title;
     description;
     fileUrl;
+    fileUrls;
     category;
     createdAt;
     updatedAt;
@@ -38,6 +39,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], PolicyDocument.prototype, "fileUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], PolicyDocument.prototype, "fileUrls", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

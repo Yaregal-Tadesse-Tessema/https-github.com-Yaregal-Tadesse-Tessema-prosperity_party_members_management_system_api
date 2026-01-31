@@ -20,6 +20,7 @@ export declare class Family {
     familyType: FamilyType;
     status: FamilyStatus;
     headMemberId?: string;
+    head?: Member;
     contactMemberId?: string;
     organizerCoordinatorMemberId?: string;
     organizerCoordinator?: Member;

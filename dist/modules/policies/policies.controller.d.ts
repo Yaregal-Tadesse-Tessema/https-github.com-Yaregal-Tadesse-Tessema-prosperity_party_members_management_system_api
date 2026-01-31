@@ -9,6 +9,10 @@ export declare class PoliciesController {
         page: number;
         limit: number;
     }>;
+    uploadFiles(id: string, uploaded: {
+        files?: Express.Multer.File[];
+    }, req: any): Promise<import("../../entities/policy-document.entity").PolicyDocument>;
+    removeFile(id: string, url: string, req: any): Promise<import("../../entities/policy-document.entity").PolicyDocument>;
     findOne(id: string): Promise<import("../../entities/policy-document.entity").PolicyDocument>;
     update(id: string, dto: UpdatePolicyDto, req: any): Promise<import("../../entities/policy-document.entity").PolicyDocument>;
     remove(id: string, req: any): Promise<{
