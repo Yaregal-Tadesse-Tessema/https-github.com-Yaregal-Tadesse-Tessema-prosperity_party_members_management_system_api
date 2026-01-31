@@ -26,13 +26,13 @@ let MembersController = class MembersController {
         this.checkPermission(req.user, ['system_admin', 'party_admin', 'data_entry_officer']);
         return this.membersService.create(createMemberDto, req.user.id, req.user.username);
     }
-    async findAll(req, page = '1', limit = '10', search, membershipStatus, status, gender, subCity, familyId) {
+    async findAll(req, page = '1', limit = '10', search, membershipStatus, status, gender, subCity, familyId, educationLevel) {
         this.rejectMemberRole(req.user);
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
         const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
-        console.log('Members API called with filters:', { page: pageNum, limit: limitNum, search, membershipStatus, status, gender, subCity, familyId });
-        const result = await this.membersService.findAll(pageNum, limitNum, search, membershipStatus, status, gender, subCity, familyId);
+        console.log('Members API called with filters:', { page: pageNum, limit: limitNum, search, membershipStatus, status, gender, subCity, familyId, educationLevel });
+        const result = await this.membersService.findAll(pageNum, limitNum, search, membershipStatus, status, gender, subCity, familyId, educationLevel);
         console.log('Members API returned:', { count: result.members.length, total: result.total });
         if (!canViewSalary) {
             result.members = result.members.map(member => {
@@ -244,8 +244,9 @@ __decorate([
     __param(6, (0, common_1.Query)('gender')),
     __param(7, (0, common_1.Query)('subCity')),
     __param(8, (0, common_1.Query)('familyId')),
+    __param(9, (0, common_1.Query)('educationLevel')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], MembersController.prototype, "findAll", null);
 __decorate([

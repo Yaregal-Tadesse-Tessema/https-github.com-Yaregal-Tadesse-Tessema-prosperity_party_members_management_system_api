@@ -79,7 +79,7 @@ export declare class MembersService {
     private s3Client;
     constructor(memberRepository: Repository<Member>, userRepository: Repository<User>, employmentRepository: Repository<EmploymentInfo>, fileAttachmentRepository: Repository<FileAttachment>, contributionRepository: Repository<Contribution>, positionHistoryRepository: Repository<PositionHistory>, auditLogService: AuditLogService, familiesService: FamiliesService);
     create(createMemberDto: CreateMemberDto, userId: string, username: string): Promise<Member>;
-    findAll(page?: number, limit?: number, search?: string, membershipStatus?: MembershipStatus, status?: Status, gender?: Gender, subCity?: string, familyId?: string): Promise<{
+    findAll(page?: number, limit?: number, search?: string, membershipStatus?: MembershipStatus, status?: Status, gender?: Gender, subCity?: string, familyId?: string, educationLevel?: string): Promise<{
         members: Member[];
         total: number;
         page: number;

@@ -45,6 +45,7 @@ export class MembersController {
     @Query('gender') gender?: string,
     @Query('subCity') subCity?: string,
     @Query('familyId') familyId?: string,
+    @Query('educationLevel') educationLevel?: string,
   ) {
     this.rejectMemberRole(req.user);
     const pageNum = parseInt(page);
@@ -53,8 +54,8 @@ export class MembersController {
     // Finance officers and above can see salary info, data entry officers can also see for data entry purposes
     const canViewSalary = this.hasRole(req.user, ['system_admin', 'party_admin', 'finance_officer', 'data_entry_officer']);
 
-    console.log('Members API called with filters:', { page: pageNum, limit: limitNum, search, membershipStatus, status, gender, subCity, familyId });
-    const result = await this.membersService.findAll(pageNum, limitNum, search, membershipStatus as any, status as any, gender as any, subCity, familyId);
+    console.log('Members API called with filters:', { page: pageNum, limit: limitNum, search, membershipStatus, status, gender, subCity, familyId, educationLevel });
+    const result = await this.membersService.findAll(pageNum, limitNum, search, membershipStatus as any, status as any, gender as any, subCity, familyId, educationLevel);
     console.log('Members API returned:', { count: result.members.length, total: result.total });
 
     // If user cannot view salary, remove salary information from response

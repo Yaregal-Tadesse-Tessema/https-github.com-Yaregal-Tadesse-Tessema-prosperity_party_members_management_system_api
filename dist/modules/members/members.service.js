@@ -118,7 +118,7 @@ let MembersService = class MembersService {
         });
         return savedMember;
     }
-    async findAll(page = 1, limit = 10, search, membershipStatus, status, gender, subCity, familyId) {
+    async findAll(page = 1, limit = 10, search, membershipStatus, status, gender, subCity, familyId, educationLevel) {
         const query = this.memberRepository.createQueryBuilder('member')
             .leftJoinAndSelect('member.employmentHistory', 'employment')
             .leftJoinAndSelect('member.positionHistory', 'positions')
@@ -143,6 +143,10 @@ let MembersService = class MembersService {
         }
         if (familyId) {
             query.andWhere('member.familyId = :familyId', { familyId });
+        }
+        if (educationLevel) {
+            const normalizedEducationLevel = typeof educationLevel === 'string' ? educationLevel.toLowerCase().trim() : educationLevel;
+            query.andWhere('member.educationLevel = :educationLevel', { educationLevel: normalizedEducationLevel });
         }
         query.orderBy('member.partyId', 'ASC');
         const [members, total] = await query

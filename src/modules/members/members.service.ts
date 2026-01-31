@@ -204,6 +204,7 @@ export class MembersService {
     gender?: Gender,
     subCity?: string,
     familyId?: string,
+    educationLevel?: string,
   ): Promise<{ members: Member[]; total: number; page: number; limit: number }> {
     const query = this.memberRepository.createQueryBuilder('member')
       .leftJoinAndSelect('member.employmentHistory', 'employment')
@@ -238,6 +239,11 @@ export class MembersService {
 
     if (familyId) {
       query.andWhere('member.familyId = :familyId', { familyId });
+    }
+
+    if (educationLevel) {
+      const normalizedEducationLevel = typeof educationLevel === 'string' ? educationLevel.toLowerCase().trim() : educationLevel;
+      query.andWhere('member.educationLevel = :educationLevel', { educationLevel: normalizedEducationLevel });
     }
 
     query.orderBy('member.partyId', 'ASC');

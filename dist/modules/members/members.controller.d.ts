@@ -4,7 +4,7 @@ export declare class MembersController {
     private readonly membersService;
     constructor(membersService: MembersService);
     create(createMemberDto: CreateMemberDto, req: any): Promise<import("../../entities/member.entity").Member>;
-    findAll(req: any, page?: string, limit?: string, search?: string, membershipStatus?: string, status?: string, gender?: string, subCity?: string, familyId?: string): Promise<{
+    findAll(req: any, page?: string, limit?: string, search?: string, membershipStatus?: string, status?: string, gender?: string, subCity?: string, familyId?: string, educationLevel?: string): Promise<{
         members: import("../../entities/member.entity").Member[];
         total: number;
         page: number;
